@@ -53,6 +53,14 @@ def init_db():
                 updated_at     TIMESTAMP DEFAULT NOW()
             )
         ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS research_library (
+                id             SERIAL PRIMARY KEY,
+                drive_file_id  TEXT UNIQUE,
+                cloudinary_url TEXT DEFAULT \'\',
+                created_at     TIMESTAMP DEFAULT NOW()
+            )
+        ''')
         conn.commit()
         cur.close()
         conn.close()
@@ -237,6 +245,47 @@ def upload():
         'filename':  filename,
         'error':     error_msg,
     })
+
+
+
+# ── /library/cloudinary/save: drive_id→cloudinary_url をDB保存 ──
+@app.route('/library/cloudinary/save', methods=['POST'])
+def library_cloudinary_save():
+    data           = request.json or {}
+    drive_file_id  = data.get('drive_file_id', '')
+    cloudinary_url = data.get('cloudinary_url', '')
+    if not drive_file_id or not cloudinary_url:
+        return jsonify({'error': '必須項目不足'}), 400
+    if not DATABASE_URL:
+        return jsonify({'error': 'DB未設定'}), 500
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute('''INSERT INTO research_library (drive_file_id, cloudinary_url)
+            VALUES (%s, %s)
+            ON CONFLICT (drive_file_id) DO UPDATE SET cloudinary_url = EXCLUDED.cloudinary_url''',
+            (drive_file_id, cloudinary_url))
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ── /library/cloudinary/list: drive_idリスト→cloudinary_urlマップ取得 ──
+@app.route('/library/cloudinary/list', methods=['POST'])
+def library_cloudinary_list():
+    data     = request.json or {}
+    file_ids = data.get('file_ids', [])
+    if not file_ids or not DATABASE_URL:
+        return jsonify({})
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute(
+            'SELECT drive_file_id, cloudinary_url FROM research_library WHERE drive_file_id = ANY(%s)',
+            (file_ids,))
+        rows = cur.fetchall(); cur.close(); conn.close()
+        return jsonify({r[0]: r[1] for r in rows if r[1]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ── /cloudinary/upload: 占いスタジオと完全同一 ───────────────
