@@ -348,7 +348,16 @@ def cloudinary_upload():
 
 
 # ── /analyze: Vision AI（Pabbly経由） ────────────────────────
-COCONALA_VISION_PROMPT = '{"service_title":"サービスのタイトル","seller_name":"出品者名","seller_profile":"プロフィール文","caption":"サービス説明文（できるだけ全文）","price":"価格（数字のみ、最安値）","reviews":"評価件数（数字のみ）","category":"タロット/占星術/数秘術/手相/霊視/その他 のどれか1つ"} このスクリーンショットはコナラのサービスページです。上記JSON形式のみで返してください。JSONのみ、コードブロック不要。'
+COCONALA_VISION_PROMPT = ('このスクリーンショットはココナラのサービスページです。'
+    '以下のJSON形式のみで返してください。コードブロック不要。\n'
+    '{"service_title":"ページ最上部の大きなサービスタイトル（例:人生 恋愛 カード占い）",'
+    '"seller_name":"出品者名・ハンドルネーム（例:Tano.Angel）",'
+    '"seller_profile":"出品者のプロフィール・自己紹介文",'
+    '"caption":"サービスの説明文・提供内容の詳細テキスト（できるだけ長く全文取得）",'
+    '"price":"最安値プランの価格（数字のみ・例:500）",'
+    '"reviews":"評価の件数（数字のみ・星の数ではなく件数・例:1204）",'
+    '"category":"タロット/占星術/数秘術/手相/霊視/その他 のどれか1つ"}\n'
+    '見つからない項目は空文字列。JSONのみ返す。')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
