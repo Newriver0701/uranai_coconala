@@ -416,6 +416,8 @@ def analyze_result():
         return jsonify({'error': 'response_idが必要'}), 400
 
     try:
+        print(f'[analyze/result] response_id={response_id}')
+        print(f'[analyze/result] PABBLY_RESPONSE_URL={PABBLY_RESPONSE_URL[:60]}')
         res = requests.post(
             PABBLY_RESPONSE_URL,
             headers={
@@ -425,6 +427,7 @@ def analyze_result():
             json={'ResponseID': response_id},
             timeout=30
         )
+        print(f'[analyze/result] status={res.status_code} raw={res.text[:400]}')
         raw       = res.text
         clean_raw = re.sub(r'<=-\+\(\$@\$\)\+-=>', '_', raw)
         try:
