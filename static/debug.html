@@ -12,7 +12,7 @@ h2{color:#c9a84c;margin:24px 0 12px;border-bottom:1px solid rgba(255,255,255,0.1
 input,textarea{width:100%;padding:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
   border-radius:4px;color:#e8e4dc;font-family:monospace;font-size:12px;box-sizing:border-box;margin-bottom:8px}
 button{padding:8px 20px;background:linear-gradient(135deg,#c9a84c,#a07830);border:none;border-radius:6px;
-  color:#0d0d0f;cursor:pointer;font-weight:bold;font-size:13px;margin-right:8px}
+  color:#0d0d0f;cursor:pointer;font-weight:bold;font-size:13px;margin-right:8px;margin-bottom:8px}
 .result{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:4px;
   padding:12px;margin-top:10px;white-space:pre-wrap;word-break:break-all;font-size:12px;min-height:40px}
 .ok{border-color:rgba(39,174,96,0.5);color:#2ecc71}
@@ -26,8 +26,8 @@ button{padding:8px 20px;background:linear-gradient(135deg,#c9a84c,#a07830);borde
 
 <!-- Step1 -->
 <div class="step">
-  <div class="step-title">Step 1: 画像アップロード → Drive URL取得</div>
-  <div class="info">画像ファイルを選択して /research/upload を叩く</div>
+  <div class="step-title">Step 1: 画像 → /upload → drive_url取得</div>
+  <div class="info">占いスタジオと同じ /upload エンドポイント</div>
   <input type="file" id="s1-file" accept="image/*">
   <button onclick="runStep1()">▶ 実行</button>
   <div id="s1-result" class="result">結果がここに出ます</div>
@@ -35,8 +35,8 @@ button{padding:8px 20px;background:linear-gradient(135deg,#c9a84c,#a07830);borde
 
 <!-- Step2 -->
 <div class="step">
-  <div class="step-title">Step 2: Drive URL → Cloudinary URL変換</div>
-  <div class="info">Step1で取得したdrive_urlを貼る（または自動入力）</div>
+  <div class="step-title">Step 2: drive_url → /cloudinary/upload → Cloudinary URL</div>
+  <div class="info">占いスタジオと同じ /cloudinary/upload エンドポイント</div>
   <input type="text" id="s2-drive-url" placeholder="https://drive.google.com/uc?export=view&id=...">
   <button onclick="runStep2()">▶ 実行</button>
   <div id="s2-result" class="result">結果がここに出ます</div>
@@ -44,8 +44,7 @@ button{padding:8px 20px;background:linear-gradient(135deg,#c9a84c,#a07830);borde
 
 <!-- Step3 -->
 <div class="step">
-  <div class="step-title">Step 3: Cloudinary URL → Pabbly Vision → response_id取得</div>
-  <div class="info">Step2で取得したCloudinary URLを貼る（または自動入力）</div>
+  <div class="step-title">Step 3: Cloudinary URL → /analyze → response_id取得</div>
   <input type="text" id="s3-image-url" placeholder="https://res.cloudinary.com/...">
   <button onclick="runStep3()">▶ 実行</button>
   <div id="s3-result" class="result">結果がここに出ます</div>
@@ -53,19 +52,17 @@ button{padding:8px 20px;background:linear-gradient(135deg,#c9a84c,#a07830);borde
 
 <!-- Step4 -->
 <div class="step">
-  <div class="step-title">Step 4: ポーリング → AI読み取り結果取得</div>
-  <div class="info">Step3で取得したresponse_idを貼る（または自動入力）</div>
+  <div class="step-title">Step 4: /analyze/result → AI読み取り結果取得（ポーリング）</div>
   <input type="text" id="s4-response-id" placeholder="response_id...">
-  <button onclick="runStep4()">▶ 1回ポーリング</button>
-  <button onclick="runStep4Auto()">🔄 自動ポーリング（最大20回）</button>
+  <button onclick="runStep4()">▶ 1回だけ</button>
+  <button onclick="runStep4Auto()">🔄 自動ポーリング</button>
   <div id="s4-result" class="result">結果がここに出ます</div>
 </div>
 
 <!-- Step5 -->
 <div class="step">
-  <div class="step-title">Step 5: DB保存テスト</div>
-  <div class="info">service_titleだけ入れてPOST /research/entries を叩く</div>
-  <input type="text" id="s5-title" placeholder="テスト用タイトル" value="DEBUGテスト">
+  <div class="step-title">Step 5: DB保存テスト → /research/entries</div>
+  <input type="text" id="s5-title" value="DEBUGテスト">
   <button onclick="runStep5()">▶ 実行</button>
   <div id="s5-result" class="result">結果がここに出ます</div>
 </div>
@@ -77,7 +74,6 @@ function setResult(id, data, isErr) {
   el.className = 'result ' + (isErr ? 'err' : 'ok');
 }
 
-// Step1
 async function runStep1() {
   const file = document.getElementById('s1-file').files[0];
   if (!file) { setResult('s1-result', 'ファイルを選択してください', true); return; }
@@ -85,91 +81,80 @@ async function runStep1() {
   try {
     const fd = new FormData();
     fd.append('file', file);
-    const res  = await fetch('/research/upload', { method: 'POST', body: fd });
+    fd.append('folderId', '');
+    fd.append('file_name', file.name);
+    const res  = await fetch('/upload', { method: 'POST', body: fd });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { setResult('s1-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+    try { data = JSON.parse(text); } catch(e) { setResult('s1-result', 'JSONパース失敗\nraw:\n' + text, true); return; }
     setResult('s1-result', data, !data.drive_url);
-    // 自動引き継ぎ
-    if (data.drive_url) {
-      document.getElementById('s2-drive-url').value = data.drive_url;
-    }
+    if (data.drive_url) document.getElementById('s2-drive-url').value = data.drive_url;
   } catch(e) { setResult('s1-result', '例外: ' + e.message, true); }
 }
 
-// Step2
 async function runStep2() {
   const driveUrl = document.getElementById('s2-drive-url').value.trim();
   if (!driveUrl) { setResult('s2-result', 'drive_urlを入力してください', true); return; }
   setResult('s2-result', '送信中...', false);
   try {
-    const res  = await fetch('/research/cloudinary', {
+    const res  = await fetch('/cloudinary/upload', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ drive_url: driveUrl })
+      body: JSON.stringify({ drive_url: driveUrl, public_id: '' })
     });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { setResult('s2-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+    try { data = JSON.parse(text); } catch(e) { setResult('s2-result', 'JSONパース失敗\nraw:\n' + text, true); return; }
     setResult('s2-result', data, !data.url);
-    if (data.url) {
-      document.getElementById('s3-image-url').value = data.url;
-    }
+    if (data.url) document.getElementById('s3-image-url').value = data.url;
   } catch(e) { setResult('s2-result', '例外: ' + e.message, true); }
 }
 
-// Step3
 async function runStep3() {
   const imageUrl = document.getElementById('s3-image-url').value.trim();
   if (!imageUrl) { setResult('s3-result', 'image_urlを入力してください', true); return; }
   setResult('s3-result', '送信中...', false);
   try {
-    const res  = await fetch('/research/analyze', {
+    const res  = await fetch('/analyze', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ image_url: imageUrl })
     });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { setResult('s3-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+    try { data = JSON.parse(text); } catch(e) { setResult('s3-result', 'JSONパース失敗\nraw:\n' + text, true); return; }
     setResult('s3-result', data, !data.response_id);
-    if (data.response_id) {
-      document.getElementById('s4-response-id').value = data.response_id;
-    }
+    if (data.response_id) document.getElementById('s4-response-id').value = data.response_id;
   } catch(e) { setResult('s3-result', '例外: ' + e.message, true); }
 }
 
-// Step4 (1回)
 async function runStep4() {
   const responseId = document.getElementById('s4-response-id').value.trim();
   if (!responseId) { setResult('s4-result', 'response_idを入力してください', true); return; }
   setResult('s4-result', '送信中...', false);
   try {
-    const res  = await fetch('/research/result', {
+    const res  = await fetch('/analyze/result', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ response_id: responseId })
     });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { setResult('s4-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+    try { data = JSON.parse(text); } catch(e) { setResult('s4-result', 'JSONパース失敗\nraw:\n' + text, true); return; }
     setResult('s4-result', data, data.status === 'error');
   } catch(e) { setResult('s4-result', '例外: ' + e.message, true); }
 }
 
-// Step4 (自動ポーリング)
 async function runStep4Auto() {
   const responseId = document.getElementById('s4-response-id').value.trim();
   if (!responseId) { setResult('s4-result', 'response_idを入力してください', true); return; }
   let attempt = 0;
   const poll = async () => {
     if (attempt > 20) { setResult('s4-result', 'タイムアウト (20回)', true); return; }
-    setResult('s4-result', `ポーリング中... (${attempt + 1}回目)`, false);
+    setResult('s4-result', `ポーリング中... ${attempt + 1}回目`, false);
     try {
-      const res  = await fetch('/research/result', {
+      const res  = await fetch('/analyze/result', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ response_id: responseId })
       });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch(e) { setResult('s4-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+      const data = await res.json();
       if (data.status === 'processing') { attempt++; setTimeout(poll, 2000); return; }
       setResult('s4-result', data, data.status === 'error');
     } catch(e) { setResult('s4-result', '例外: ' + e.message, true); }
@@ -177,7 +162,6 @@ async function runStep4Auto() {
   poll();
 }
 
-// Step5
 async function runStep5() {
   const title = document.getElementById('s5-title').value.trim();
   setResult('s5-result', '送信中...', false);
@@ -188,7 +172,7 @@ async function runStep5() {
     });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { setResult('s5-result', 'JSONパース失敗\nraw: ' + text, true); return; }
+    try { data = JSON.parse(text); } catch(e) { setResult('s5-result', 'JSONパース失敗\nraw:\n' + text, true); return; }
     setResult('s5-result', data, !data.id);
   } catch(e) { setResult('s5-result', '例外: ' + e.message, true); }
 }

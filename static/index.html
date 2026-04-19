@@ -293,27 +293,28 @@ textarea{resize:vertical}
 </main>
 
 <script>
+let selectedFile = null;
+
 const CATEGORIES = ['すべて','タロット','占星術','数秘術','手相','霊視','その他'];
 let currentFilter = 'すべて';
-let searchTimer   = null;
+let searchTimer = null;
 
 renderCatFilters();
 
 function showView(v) {
   ['upload','confirm','list','detail'].forEach(n => {
-    document.getElementById(`view-${n}`).style.display = n === v ? 'block' : 'none';
+    document.getElementById('view-' + n).style.display = n === v ? 'block' : 'none';
   });
-  document.getElementById('nav-upload').className = `nav-btn${v==='upload'||v==='confirm' ? ' active' : ''}`;
-  document.getElementById('nav-list').className   = `nav-btn${v==='list'||v==='detail'   ? ' active' : ''}`;
+  document.getElementById('nav-upload').className = 'nav-btn' + (v==='upload'||v==='confirm' ? ' active' : '');
+  document.getElementById('nav-list').className   = 'nav-btn' + (v==='list'||v==='detail'   ? ' active' : '');
   if (v === 'list') loadEntries();
 }
 
 function onDropZoneClick() {
-  if (document.getElementById('preview-wrap').style.display === 'none' || !document.getElementById('preview-wrap').style.display) {
+  if (!document.getElementById('preview-wrap').style.display || document.getElementById('preview-wrap').style.display === 'none') {
     document.getElementById('file-input').click();
   }
 }
-let selectedFile = null;
 function onFileSelect(e) { const f = e.target.files[0]; if(f) setPreview(f); }
 function onDrop(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setPreview(f); }
 
@@ -331,56 +332,60 @@ function setPreview(file) {
   reader.readAsDataURL(file);
 }
 
-// ── メインフロー ──────────────────────────────────────────
-// Step1: /tmp保存 → Pabbly → Drive URL
-// Step2: Drive URL → Pabbly Cloudinary → Cloudinary URL
-// Step3: Cloudinary URL → Pabbly Vision → response_id
-// Step4: ポーリング → 結果取得
+// ── Step1: /upload → drive_url ──────────────────────────────
+// ── Step2: /cloudinary/upload → cloudinary_url ─────────────
+// ── Step3: /analyze → response_id ──────────────────────────
+// ── Step4: /analyze/result ポーリング ───────────────────────
 async function startAnalyze() {
-  const file = selectedFile || document.getElementById('file-input').files[0];
-  if (!file) return;
+  const file = selectedFile;
+  if (!file) { showError('ファイルが選択されていません'); return; }
   setLoading(true, '📤 Google Driveにアップロード中...');
   hideError();
 
-  // Step1: upload → drive_url
+  // Step1
   let driveUrl = '';
   try {
     const fd = new FormData();
     fd.append('file', file);
-    const res  = await fetch('/research/upload', { method:'POST', body: fd });
-    const data = await res.json();
-    if (data.error && !data.drive_url) { showError('アップロードエラー: ' + data.error); setLoading(false); return; }
+    fd.append('folderId', '');
+    fd.append('file_name', file.name);
+    const res  = await fetch('/upload', { method:'POST', body: fd });
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (data.error && !data.drive_url) { showError('Step1エラー: ' + data.error); setLoading(false); return; }
     driveUrl = data.drive_url;
-    if (!driveUrl) { showError('Drive URLの取得に失敗しました'); setLoading(false); return; }
-  } catch(e) { showError('アップロードエラー: ' + e.message); setLoading(false); return; }
+    if (!driveUrl) { showError('Drive URLが取得できませんでした'); setLoading(false); return; }
+  } catch(e) { showError('Step1例外: ' + e.message); setLoading(false); return; }
 
-  // Step2: drive_url → cloudinary url
+  // Step2
   setLoading(true, '☁️ Cloudinaryに変換中...');
   let cloudinaryUrl = '';
   try {
-    const res  = await fetch('/research/cloudinary', {
+    const res  = await fetch('/cloudinary/upload', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ drive_url: driveUrl })
+      body: JSON.stringify({ drive_url: driveUrl, public_id: '' })
     });
-    const data = await res.json();
-    if (!data.url) { showError(data.error || 'Cloudinary変換失敗'); setLoading(false); return; }
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (!data.url) { showError('Step2エラー: ' + (data.error || text.slice(0,200))); setLoading(false); return; }
     cloudinaryUrl = data.url;
-  } catch(e) { showError('Cloudinaryエラー: ' + e.message); setLoading(false); return; }
+  } catch(e) { showError('Step2例外: ' + e.message); setLoading(false); return; }
 
-  // Step3: cloudinary url → pabbly vision → response_id
+  // Step3
   setLoading(true, '🔍 AI読み取りリクエスト中...');
   let responseId = '';
   try {
-    const res  = await fetch('/research/analyze', {
+    const res  = await fetch('/analyze', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ image_url: cloudinaryUrl })
     });
-    const data = await res.json();
-    if (!data.response_id) { showError(data.error || 'response_id取得失敗'); setLoading(false); return; }
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (!data.response_id) { showError('Step3エラー: ' + (data.error || text.slice(0,200))); setLoading(false); return; }
     responseId = data.response_id;
-  } catch(e) { showError('分析リクエストエラー: ' + e.message); setLoading(false); return; }
+  } catch(e) { showError('Step3例外: ' + e.message); setLoading(false); return; }
 
-  // Step4: ポーリング
+  // Step4
   setLoading(true, '⏳ AI解析中...');
   pollResult(responseId, cloudinaryUrl, 0);
 }
@@ -389,16 +394,16 @@ function pollResult(responseId, cloudinaryUrl, attempt) {
   if (attempt > 20) { showError('タイムアウト。もう一度お試しください'); setLoading(false); return; }
   setTimeout(async () => {
     try {
-      const res  = await fetch('/research/result', {
+      const res  = await fetch('/analyze/result', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ response_id: responseId })
       });
       const data = await res.json();
-      if (data.status === 'processing') { setLoading(true, `⏳ AI解析中... (${attempt+1})`); pollResult(responseId, cloudinaryUrl, attempt+1); return; }
-      if (data.status === 'error')      { showError(data.error || '解析エラー'); setLoading(false); return; }
+      if (data.status === 'processing') { setLoading(true, '⏳ AI解析中... (' + (attempt+1) + ')'); pollResult(responseId, cloudinaryUrl, attempt+1); return; }
+      if (data.status === 'error') { showError(data.error || '解析エラー'); setLoading(false); return; }
       if (data.status === 'done' && data.data) { setLoading(false); fillConfirmForm(data.data, cloudinaryUrl); return; }
       pollResult(responseId, cloudinaryUrl, attempt+1);
-    } catch(e) { showError('ポーリングエラー: ' + e.message); setLoading(false); }
+    } catch(e) { showError('ポーリング例外: ' + e.message); setLoading(false); }
   }, 2000);
 }
 
@@ -425,7 +430,7 @@ async function saveEntry() {
   btn.disabled = true; btn.textContent = '保存中...';
   const editId = document.getElementById('edit-id').value;
   const body = {
-    service_title: title,
+    service_title:  title,
     seller_name:    document.getElementById('f-seller-name').value,
     seller_profile: document.getElementById('f-seller-profile').value,
     caption:        document.getElementById('f-caption').value,
@@ -435,7 +440,7 @@ async function saveEntry() {
     image_url:      document.getElementById('f-image-url').value,
     notes:          document.getElementById('f-notes').value,
   };
-  const url = editId ? `/research/entries/${editId}` : '/research/entries';
+  const url = editId ? '/research/entries/' + editId : '/research/entries';
   const res = await fetch(url, { method: editId?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
   btn.disabled = false;
   if (res.ok) { toast(editId?'更新しました':'登録しました！'); resetUpload(); showView('list'); }
@@ -444,7 +449,7 @@ async function saveEntry() {
 
 function renderCatFilters() {
   document.getElementById('cat-filters').innerHTML = CATEGORIES.map(c =>
-    `<button class="cat-btn${c===currentFilter?' active':''}" onclick="setCategory('${c}')">${c}</button>`
+    '<button class="cat-btn' + (c===currentFilter?' active':'') + '" onclick="setCategory(\'' + c + '\')">' + c + '</button>'
   ).join('');
 }
 function setCategory(cat) { currentFilter = cat; renderCatFilters(); loadEntries(); }
@@ -453,7 +458,7 @@ function onSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(loadEn
 async function loadEntries() {
   const search = document.getElementById('search-input').value;
   const params = new URLSearchParams({ search, category: currentFilter });
-  const res = await fetch(`/research/entries?${params}`);
+  const res = await fetch('/research/entries?' + params);
   const entries = await res.json();
   document.getElementById('total-count').textContent = entries.length;
   document.getElementById('nav-count').textContent   = entries.length;
@@ -463,35 +468,35 @@ async function loadEntries() {
 function renderEntries(entries) {
   const el = document.getElementById('entries-container');
   if (!entries.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">◈</div><div class="empty-title">データがありません</div><div class="empty-sub">「📷 スクショ登録」からデータを追加しましょう</div></div>`;
+    el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div><div class="empty-title">データがありません</div><div class="empty-sub">「📷 スクショ登録」からデータを追加しましょう</div></div>';
     return;
   }
-  el.innerHTML = `<div class="grid">${entries.map(e => cardHTML(e)).join('')}</div>`;
+  el.innerHTML = '<div class="grid">' + entries.map(e => cardHTML(e)).join('') + '</div>';
 }
 
 function cardHTML(e) {
-  const img   = e.image_url ? `<img src="${e.image_url}" class="card-img" alt="">` : `<div class="card-no-img">No Image</div>`;
-  const badge = e.category  ? `<span class="badge">${e.category}</span>` : '';
-  const chips = [e.price?`<span class="chip">¥${e.price}</span>`:'', e.reviews?`<span class="chip">★ ${e.reviews}件</span>`:''].filter(Boolean).join('');
-  const cap   = e.caption   ? `<div class="card-caption">${e.caption.slice(0,55)}…</div>` : '';
-  return `<div class="card" onclick="openDetail(${e.id})"><div class="card-img-wrap">${img}${badge}</div><div class="card-body"><div class="card-title">${e.service_title}</div>${e.seller_name?`<div class="card-seller">@${e.seller_name}</div>`:''}<div class="chips">${chips}</div>${cap}</div></div>`;
+  const img   = e.image_url ? '<img src="' + e.image_url + '" class="card-img" alt="">' : '<div class="card-no-img">No Image</div>';
+  const badge = e.category  ? '<span class="badge">' + e.category + '</span>' : '';
+  const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'', e.reviews?'<span class="chip">★ '+e.reviews+'件</span>':''].filter(Boolean).join('');
+  const cap   = e.caption   ? '<div class="card-caption">' + e.caption.slice(0,55) + '…</div>' : '';
+  return '<div class="card" onclick="openDetail(' + e.id + ')"><div class="card-img-wrap">' + img + badge + '</div><div class="card-body"><div class="card-title">' + e.service_title + '</div>' + (e.seller_name?'<div class="card-seller">@'+e.seller_name+'</div>':'') + '<div class="chips">' + chips + '</div>' + cap + '</div></div>';
 }
 
 async function openDetail(id) {
-  const res = await fetch(`/research/entries/${id}`);
+  const res = await fetch('/research/entries/' + id);
   const e   = await res.json();
-  const img   = e.image_url ? `<img src="${e.image_url}" class="detail-img" alt="">` : '';
-  const badge = e.category  ? `<span class="badge" style="position:static;margin-bottom:10px;display:inline-block">${e.category}</span>` : '';
-  const chips = [e.price?`<span class="chip-lg">¥${e.price}</span>`:'', e.reviews?`<span class="chip-lg">★ 評価 ${e.reviews}件</span>`:''].filter(Boolean).join('');
-  const prof  = e.seller_profile ? `<div class="detail-section"><div class="detail-sec-title">プロフィール</div><div class="detail-text">${e.seller_profile}</div></div>` : '';
-  const cap   = e.caption ? `<div class="detail-section"><div class="detail-sec-title">キャプション</div><div class="detail-text">${e.caption}</div></div>` : '';
-  const notes = e.notes   ? `<div class="detail-section"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">${e.notes}</div></div>` : '';
-  document.getElementById('detail-card').innerHTML = `${img}<div class="detail-head">${badge}<div class="detail-title">${e.service_title}</div>${e.seller_name?`<div class="detail-seller">出品者: ${e.seller_name}</div>`:''}<div class="chips">${chips}</div></div>${prof}${cap}${notes}<div class="detail-foot"><div class="detail-date">登録: ${e.created_at}</div><div class="detail-actions"><button class="edit-btn" onclick="startEdit(${e.id})">✏️ 編集</button><button class="del-btn" onclick="if(confirm('削除しますか？'))deleteEntry(${e.id})">🗑 削除</button></div></div>`;
+  const img   = e.image_url ? '<img src="' + e.image_url + '" class="detail-img" alt="">' : '';
+  const badge = e.category  ? '<span class="badge" style="position:static;margin-bottom:10px;display:inline-block">' + e.category + '</span>' : '';
+  const chips = [e.price?'<span class="chip-lg">¥'+e.price+'</span>':'', e.reviews?'<span class="chip-lg">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
+  const prof  = e.seller_profile ? '<div class="detail-section"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
+  const cap   = e.caption ? '<div class="detail-section"><div class="detail-sec-title">キャプション</div><div class="detail-text">' + e.caption + '</div></div>' : '';
+  const notes = e.notes   ? '<div class="detail-section"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">' + e.notes + '</div></div>' : '';
+  document.getElementById('detail-card').innerHTML = img + '<div class="detail-head">' + badge + '<div class="detail-title">' + e.service_title + '</div>' + (e.seller_name?'<div class="detail-seller">出品者: '+e.seller_name+'</div>':'') + '<div class="chips">' + chips + '</div></div>' + prof + cap + notes + '<div class="detail-foot"><div class="detail-date">登録: ' + e.created_at + '</div><div class="detail-actions"><button class="edit-btn" onclick="startEdit(' + e.id + ')">✏️ 編集</button><button class="del-btn" onclick="if(confirm('削除しますか？'))deleteEntry(' + e.id + ')">🗑 削除</button></div></div>';
   showView('detail');
 }
 
 async function startEdit(id) {
-  const res = await fetch(`/research/entries/${id}`);
+  const res = await fetch('/research/entries/' + id);
   const e   = await res.json();
   document.getElementById('edit-id').value          = e.id;
   document.getElementById('f-service-title').value  = e.service_title;
@@ -509,12 +514,12 @@ async function startEdit(id) {
 }
 
 async function deleteEntry(id) {
-  await fetch(`/research/entries/${id}`, { method:'DELETE' });
+  await fetch('/research/entries/' + id, { method:'DELETE' });
   toast('削除しました');
   showView('list');
 }
 
-function setLoading(on, msg='') {
+function setLoading(on, msg) {
   document.getElementById('analyze-btn').disabled = on;
   document.getElementById('loading-bar').style.display = on ? 'block' : 'none';
   if (msg) document.getElementById('loading-step').textContent = msg;
@@ -522,23 +527,22 @@ function setLoading(on, msg='') {
 function showError(msg) { const el=document.getElementById('error-msg'); el.textContent=msg; el.style.display='block'; }
 function hideError() { document.getElementById('error-msg').style.display='none'; }
 function resetUpload() {
+  selectedFile = null;
   document.getElementById('drop-zone').classList.remove('has-img');
   document.getElementById('drop-placeholder').style.display = 'block';
   document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('preview-img').src = '';
   document.getElementById('analyze-btn').disabled = true;
-  selectedFile = null;
   document.getElementById('file-input').value = '';
   hideError();
 }
-function toast(msg, type='success') {
+function toast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.style.background = type==='error' ? '#e74c3c' : '#27ae60';
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2800);
 }
-
 </script>
 </body>
 </html>
