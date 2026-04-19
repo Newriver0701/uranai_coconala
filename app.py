@@ -380,7 +380,25 @@ def analyze():
         )
         print(f'[analyze] status={res.status_code} raw={res.text[:300]}')
         d = res.json()
-        response_id = d.get('id') or (d.get('data') or {}).get('id') or ''
+
+        # パターン1: {"id": "resp_..."}
+        response_id = d.get('id') or ''
+
+        # パターン2: {"data": {"id": "resp_..."}}
+        if not response_id:
+            response_id = (d.get('data') or {}).get('id') or ''
+
+        # パターン3: {"data": {"raw_data": "{"id":"resp_..."}"}}
+        if not response_id:
+            raw_data = (d.get('data') or {}).get('raw_data', '')
+            if raw_data:
+                try:
+                    rd = json_lib.loads(raw_data)
+                    response_id = rd.get('id') or ''
+                except:
+                    pass
+
+        print(f'[analyze] response_id={response_id}')
         if not response_id:
             return jsonify({'error': 'response_id取得失敗', 'raw': str(d)[:300]}), 500
         return jsonify({'response_id': response_id})
