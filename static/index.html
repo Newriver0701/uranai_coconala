@@ -4,462 +4,514 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RESEARCH VAULT</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0c0c14; --bg2:#11111c; --panel:#161625; --panel2:#1c1c2e;
-  --border:#252538; --accent:#7c3aed; --accent2:#a78bfa;
-  --green:#10b981; --green2:#34d399; --yellow:#f59e0b;
-  --red:#ef4444; --text:#e2e8f0; --muted:#64748b; --muted2:#3f3f5a;
-  --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
+  --bg: #0d0d0f;
+  --surface: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.08);
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.15);
+  --gold-border: rgba(201,168,76,0.3);
+  --text: #e8e4dc;
+  --text-dim: rgba(232,228,220,0.45);
+  --red: #e74c3c;
+  --green: #27ae60;
+  --sb: env(safe-area-inset-bottom, 0px);
+  --st: env(safe-area-inset-top, 0px);
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow:hidden}
-.app{display:flex;flex-direction:column;height:100%;height:100dvh}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-/* Header */
-.hdr{background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:12px 16px;padding-top:max(12px,var(--st));
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.hdr-title{font-size:15px;font-weight:700;color:var(--accent2);letter-spacing:.05em}
-.hdr-count{font-size:11px;color:var(--muted)}
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(120,80,200,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(200,120,50,0.05) 0%, transparent 50%);
+}
 
-/* Scroll */
-.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
-.page{display:none;padding:16px;padding-bottom:28px}
-.page.active{display:block}
+/* ── Header ── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,13,15,0.92);
+  backdrop-filter: blur(14px);
+  padding-top: max(12px, var(--st));
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark { font-size: 18px; color: var(--gold); }
+.logo-text { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 700; letter-spacing: .22em; }
+.header-count { font-size: 11px; color: var(--text-dim); }
 
-/* Tabbar */
-.tabbar{background:var(--bg2);border-top:1px solid var(--border);
-  display:flex;flex-shrink:0;padding-bottom:var(--sb);
-  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;z-index:100}
-.tabbar::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:10px 6px;cursor:pointer;gap:3px;border:none;background:none;
-  color:var(--muted);transition:color .15s;touch-action:manipulation}
-.tab.active{color:var(--accent2)}
-.tab-icon{font-size:20px;line-height:1}
-.tab-lbl{font-size:9px;font-weight:700;letter-spacing:.04em}
+/* ── Main scroll ── */
+.main { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; position: relative; z-index: 1; }
 
-/* Cards */
-.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+/* ── Section ── */
+.section { margin-bottom: 28px; }
+.section-head {
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  letter-spacing: .18em; text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-head::before { content: ''; display: inline-block; width: 3px; height: 12px; background: var(--gold); border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
 
-/* Section head */
-.sh{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.15em;
-  text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.sh::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px;flex-shrink:0}
+/* ── Upload zone ── */
+.upzone {
+  border: 2px dashed var(--border); border-radius: 14px;
+  padding: 28px 20px; text-align: center; cursor: pointer;
+  background: var(--surface); position: relative; overflow: hidden;
+  transition: all .2s;
+}
+.upzone:hover, .upzone.drag { border-color: var(--gold-border); background: var(--gold-dim); }
+.upzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.up-icon { font-size: 32px; margin-bottom: 8px; }
+.up-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.up-sub { font-size: 11px; color: var(--text-dim); }
 
-/* Buttons */
-.btn{font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;
-  padding:12px 16px;border:none;cursor:pointer;border-radius:8px;
-  letter-spacing:.04em;transition:all .15s;
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  -webkit-appearance:none;touch-action:manipulation}
-.btn:active{transform:scale(.97);opacity:.9}
-.btn-primary{background:var(--accent);color:white}
-.btn-outline{background:var(--panel2);color:var(--accent2);border:1px solid var(--border)}
-.btn-full{width:100%}
-.btn-sm{padding:8px 12px;font-size:11px}
+/* ── Progress ── */
+.prog-wrap { display: none; margin-top: 10px; }
+.prog-wrap.show { display: block; }
+.prog-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #e8b86d); border-radius: 2px; width: 0%; transition: width .3s; }
+.prog-lbl { font-size: 11px; color: var(--text-dim); text-align: center; }
 
-/* Upload zone */
-.upzone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;
-  text-align:center;cursor:pointer;background:var(--bg2);position:relative;overflow:hidden;transition:all .2s}
-.upzone.drag{border-color:var(--accent);background:rgba(124,58,237,.08)}
-.upzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
-.up-icon{font-size:36px;margin-bottom:8px}
-.up-title{font-size:14px;font-weight:700;margin-bottom:4px}
-.up-sub{font-size:11px;color:var(--muted)}
+/* ── URL tag ── */
+.url-tag {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(201,168,76,0.07); border: 1px solid var(--gold-border);
+  border-radius: 8px; padding: 8px 12px; margin-top: 8px; cursor: pointer;
+}
+.url-tag-txt { flex: 1; font-size: 10px; color: var(--gold); word-break: break-all; font-family: monospace; }
 
-/* Progress */
-.prog-wrap{display:none;margin-top:10px}
-.prog-wrap.show{display:block}
-.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;width:0%;transition:width .3s}
-.prog-lbl{font-size:11px;color:var(--muted);text-align:center}
+/* ── Library ── */
+.lib-toolbar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.lib-legend { display: flex; gap: 10px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-dim); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
 
-/* Library grid */
-.lib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.lib-item{aspect-ratio:1;border-radius:8px;overflow:hidden;
-  border:2px solid var(--border);position:relative;cursor:pointer;
-  transition:all .15s;background:var(--bg2)}
-.lib-item:active{transform:scale(.96)}
-.lib-item.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.4)}
-.lib-item img{width:100%;height:100%;object-fit:cover;display:block}
-.lib-item .sel-overlay{display:none;position:absolute;inset:0;
-  background:rgba(124,58,237,0.35);align-items:center;justify-content:center}
-.lib-item.sel .sel-overlay{display:flex}
-.sel-check{width:32px;height:32px;background:var(--accent);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;
-  box-shadow:0 2px 8px rgba(0,0,0,.5)}
-.lib-lbl{position:absolute;bottom:0;left:0;right:0;
-  background:rgba(0,0,0,.75);font-size:8px;padding:3px 5px;
-  text-align:center;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lib-badge{position:absolute;top:4px;left:4px;font-size:8px;padding:2px 6px;border-radius:8px;font-weight:bold}
-.lib-badge.converted{background:#7c3aed;color:#fff}
-.lib-badge.raw{background:#555;color:#ccc}
-.lib-empty{grid-column:1/-1;text-align:center;padding:24px;color:var(--muted2);font-size:12px;line-height:2}
+.lib-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media(min-width: 480px) { .lib-grid { grid-template-columns: repeat(4, 1fr); } }
+@media(min-width: 700px) { .lib-grid { grid-template-columns: repeat(5, 1fr); } }
 
-/* URL tag */
-.url-tag{display:flex;align-items:center;gap:8px;
-  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
-  border-radius:8px;padding:8px 12px;margin-top:8px;cursor:pointer}
-.url-tag-txt{flex:1;font-size:10px;color:var(--green2);word-break:break-all;line-height:1.5;font-family:monospace}
+.lib-item {
+  aspect-ratio: 1; border-radius: 8px; overflow: hidden;
+  border: 2px solid var(--border); position: relative; cursor: pointer;
+  transition: all .15s; background: rgba(255,255,255,0.03);
+}
+.lib-item:active { transform: scale(.95); }
+.lib-item.sel { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(201,168,76,0.3); }
+.lib-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lib-item .sel-overlay {
+  display: none; position: absolute; inset: 0;
+  background: rgba(201,168,76,0.3); align-items: center; justify-content: center;
+}
+.lib-item.sel .sel-overlay { display: flex; }
+.sel-check {
+  width: 28px; height: 28px; background: var(--gold);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #0d0d0f; font-weight: 900;
+}
+.lib-badge {
+  position: absolute; top: 4px; left: 4px;
+  font-size: 7px; padding: 2px 5px; border-radius: 6px; font-weight: 700;
+}
+.lib-badge.converted { background: var(--gold); color: #0d0d0f; }
+.lib-badge.raw { background: rgba(255,255,255,0.15); color: var(--text-dim); }
+.lib-del {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px; background: rgba(231,76,60,0.85);
+  border: none; border-radius: 50%; color: #fff;
+  font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  z-index: 3; transition: background .15s;
+}
+.lib-del:hover { background: var(--red); }
+.lib-lbl {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,.75); font-size: 7px; padding: 3px 4px;
+  text-align: center; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lib-empty { grid-column: 1/-1; text-align: center; padding: 32px; color: var(--text-dim); font-size: 12px; line-height: 2; }
 
-/* Inputs */
-.inp{width:100%;background:var(--bg2);border:1px solid var(--border);
-  color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;
-  padding:11px 12px;outline:none;border-radius:8px;transition:border-color .2s;-webkit-appearance:none}
-.inp:focus{border-color:var(--accent)}
-.inp::placeholder{color:var(--muted2)}
-textarea.inp{resize:none;line-height:1.6}
-select.inp option{background:var(--bg2)}
-.il{font-size:11px;color:var(--muted);margin-bottom:5px}
-.ir{margin-bottom:10px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* ── Sel bar ── */
+.sel-bar {
+  position: sticky; bottom: calc(var(--sb) + 12px); z-index: 50;
+  background: rgba(13,13,15,0.95); border: 1px solid var(--gold-border);
+  border-radius: 14px; padding: 14px 16px;
+  backdrop-filter: blur(12px);
+  display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.sel-bar.show { display: block; }
+.sel-bar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sel-bar-count { font-size: 13px; font-weight: 700; color: var(--gold); }
 
-/* Confirm */
-.confirm-img-wrap{width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
-  border:1px solid var(--border);margin-bottom:12px;background:var(--bg2)}
-.confirm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+/* ── Confirm card ── */
+.confirm-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; margin-bottom: 28px;
+  display: none;
+}
+.confirm-card.show { display: block; }
+.confirm-img-wrap {
+  width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); margin-bottom: 16px; background: rgba(255,255,255,0.02);
+}
+.confirm-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.analyzing-msg { text-align: center; padding: 32px; color: var(--text-dim); font-size: 13px; }
 
-/* Toast */
-#toast{position:fixed;top:max(16px,var(--st));left:50%;transform:translateX(-50%);
-  background:var(--panel2);border:1px solid var(--border);border-radius:10px;
-  padding:10px 18px;font-size:13px;font-weight:500;
-  opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;
-  white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-#toast.show{opacity:1}
-#toast.ok{border-color:var(--green);color:var(--green2)}
-#toast.err{border-color:var(--red);color:var(--red)}
+/* ── Form ── */
+.field { margin-bottom: 12px; }
+.field-label { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; letter-spacing: .04em; }
+input.inp, textarea.inp, select.inp {
+  width: 100%; padding: 10px 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+}
+input.inp:focus, textarea.inp:focus, select.inp:focus { border-color: var(--gold-border); }
+input.inp::placeholder, textarea.inp::placeholder { color: var(--text-dim); }
+select.inp option { background: #1a1a1e; }
+textarea.inp { resize: vertical; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-/* List / Detail */
-.entry-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
-  overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
-.entry-card:active{border-color:var(--accent)}
-.entry-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--bg2)}
-.entry-body{padding:10px 12px}
-.entry-title{font-size:13px;font-weight:700;margin-bottom:3px;line-height:1.4}
-.entry-seller{font-size:11px;color:var(--muted);margin-bottom:6px}
-.entry-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
-.chip{padding:2px 8px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);
-  border-radius:10px;font-size:10px;color:var(--accent2)}
-.entry-cap{font-size:11px;color:var(--muted);line-height:1.5}
-.cat-badge{display:inline-block;padding:2px 8px;background:rgba(124,58,237,.2);
-  border:1px solid rgba(124,58,237,.3);border-radius:10px;font-size:10px;
-  color:var(--accent2);margin-bottom:6px}
+/* ── Buttons ── */
+.btn {
+  font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 11px 20px; border: none; cursor: pointer; border-radius: 8px;
+  letter-spacing: .04em; transition: all .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:active { transform: scale(.97); }
+.btn-gold { background: linear-gradient(135deg, #c9a84c, #a07830); color: #0d0d0f; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+.btn-red { background: rgba(231,76,60,.12); border: 1px solid rgba(231,76,60,.25); color: var(--red); }
+.btn-full { width: 100%; }
+.btn-sm { padding: 7px 14px; font-size: 11px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
 
-/* Search */
-.search-wrap{position:relative;margin-bottom:10px}
-.search-inp{width:100%;background:var(--panel);border:1px solid var(--border);
-  color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;
-  padding:11px 12px 11px 36px;outline:none;border-radius:8px;-webkit-appearance:none}
-.search-inp:focus{border-color:var(--accent)}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
-.cat-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
-.cat-scroll::-webkit-scrollbar{display:none}
-.cat-pill{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border);
-  background:transparent;color:var(--muted);cursor:pointer;font-size:11px;
-  font-family:'Noto Sans JP',sans-serif;white-space:nowrap;transition:all .15s}
-.cat-pill.active{background:rgba(124,58,237,.2);border-color:var(--accent);color:var(--accent2)}
+/* ── Divider ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
 
-/* Detail */
-.detail-sec{margin-bottom:14px}
-.detail-sec-title{font-size:9px;letter-spacing:.15em;color:var(--accent2);
-  text-transform:uppercase;margin-bottom:6px;font-weight:700}
-.detail-text{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap}
-.note-text{background:rgba(124,58,237,.06);padding:10px 12px;
-  border-radius:8px;border-left:3px solid rgba(124,58,237,.4)}
+/* ── Entries ── */
+.entry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.entry-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .2s;
+}
+.entry-card:hover { border-color: var(--gold-border); transform: translateY(-2px); }
+.entry-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: rgba(255,255,255,0.02); }
+.entry-body { padding: 12px 14px; }
+.entry-cat { display: inline-block; padding: 2px 8px; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 10px; font-size: 9px; color: var(--gold); margin-bottom: 6px; }
+.entry-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; line-height: 1.4; }
+.entry-seller { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+.entry-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; }
+.chip { padding: 2px 7px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 10px; color: var(--text-dim); }
+.entry-cap { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+/* ── Search ── */
+.search-wrap { position: relative; margin-bottom: 10px; }
+.search-inp {
+  width: 100%; padding: 11px 12px 11px 36px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif; outline: none; -webkit-appearance: none;
+}
+.search-inp:focus { border-color: var(--gold-border); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; pointer-events: none; }
+.cat-pills { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
+.cat-pills::-webkit-scrollbar { display: none; }
+.cat-pill {
+  flex-shrink: 0; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); cursor: pointer; font-size: 11px;
+  font-family: 'Noto Sans JP', sans-serif; transition: all .15s;
+}
+.cat-pill.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+/* ── Detail modal ── */
+.detail-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+  overflow-y: auto; padding: 20px 16px;
+}
+.detail-overlay.show { display: block; }
+.detail-modal {
+  max-width: 700px; margin: 0 auto;
+  background: #16161e; border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+}
+.detail-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+.detail-body { padding: 20px; }
+.detail-sec { margin-bottom: 16px; }
+.detail-sec-title { font-size: 9px; letter-spacing: .15em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+.detail-text { font-size: 13px; line-height: 1.8; color: rgba(232,228,220,.8); white-space: pre-wrap; }
+.note-text { background: var(--gold-dim); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--gold-border); }
+.detail-foot { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.detail-date { font-size: 11px; color: var(--text-dim); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; top: max(20px, var(--st)); left: 50%; transform: translateX(-50%);
+  background: #1e1e2a; border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 20px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999;
+  white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,.5);
+}
+#toast.show { opacity: 1; }
+#toast.ok { border-color: var(--gold); color: var(--gold); }
+#toast.err { border-color: var(--red); color: var(--red); }
 </style>
 </head>
 <body>
-<div class="app">
 
 <div id="toast"></div>
 
-<header class="hdr">
-  <div class="hdr-title">◈ RESEARCH VAULT</div>
-  <div class="hdr-count">競合DB · <span id="total-count">0</span>件</div>
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-modal" id="detail-modal"></div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-mark">◈</span>
+      <span class="logo-text">RESEARCH VAULT</span>
+    </div>
+    <div class="header-count">競合DB · <span id="total-count">0</span>件</div>
+  </div>
 </header>
 
-<div class="main" id="mainScroll">
+<div class="main">
 
-  <!-- ── ライブラリ ── -->
-  <div class="page active" id="page-library">
-
-    <!-- アップロード -->
-    <div class="card">
-      <div class="sh">画像をアップロード</div>
-      <div class="upzone" id="upzone">
-        <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(this)">
-        <div class="up-icon">📁</div>
-        <div class="up-title">タップして画像を選択</div>
-        <div class="up-sub">JPG / PNG / WEBP</div>
-      </div>
-      <div class="prog-wrap" id="upProg">
-        <div class="prog-bar"><div class="prog-fill" id="upFill"></div></div>
-        <div class="prog-lbl" id="upLbl">アップロード中...</div>
-      </div>
-      <div id="lastUrlTag"></div>
+  <!-- ── アップロード ── -->
+  <div class="section">
+    <div class="section-head"><span>画像をアップロード</span></div>
+    <div class="upzone" id="upzone">
+      <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(this)">
+      <div class="up-icon">📁</div>
+      <div class="up-title">タップして画像を選択</div>
+      <div class="up-sub">JPG / PNG / WEBP — Driveに保存します</div>
     </div>
-
-    <!-- Drive ライブラリ -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div class="sh" style="margin-bottom:0">Driveライブラリ</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:10px;color:var(--muted)" id="libCount">0枚</span>
-          <button class="btn btn-outline btn-sm" onclick="loadDriveFiles()" id="reloadBtn">🔄</button>
-        </div>
-      </div>
-      <div id="driveLoading" style="display:none;margin-bottom:8px">
-        <div class="prog-bar"><div class="prog-fill" id="driveFill"></div></div>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px" id="driveLbl">読み込み中...</div>
-      </div>
-      <div id="libLegend" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
-      <div class="lib-grid" id="libGrid">
-        <div class="lib-empty">🔄 読み込むボタンを押してDriveから取得</div>
-      </div>
+    <div class="prog-wrap" id="upProg">
+      <div class="prog-bar"><div class="prog-fill" id="upFill"></div></div>
+      <div class="prog-lbl" id="upLbl"></div>
     </div>
-
-    <!-- 選択パネル -->
-    <div id="selPanel" style="display:none;position:sticky;bottom:0;z-index:50;
-      background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;margin:0 -16px -28px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:700;color:var(--accent2)">
-          ✅ <span id="selCount">0</span>枚選択中
-        </div>
-        <button class="btn btn-outline btn-sm" onclick="clearSelection()">✕ 解除</button>
-      </div>
-      <button class="btn btn-primary btn-full" style="padding:14px;font-size:15px" onclick="startConvert()">✨ AI読み取り開始</button>
-      <div class="prog-wrap" id="convertProg" style="margin-top:8px">
-        <div class="prog-bar"><div class="prog-fill" id="convertFill"></div></div>
-        <div class="prog-lbl" id="convertLbl"></div>
-      </div>
-    </div>
-
+    <div id="lastUrlTag"></div>
   </div>
 
-  <!-- ── 確認・登録 ── -->
-  <div class="page" id="page-confirm">
-    <div class="card">
-      <div class="sh">AI読み取り結果を確認</div>
-      <div id="confirm-loading" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">⏳ AI解析中...</div>
+  <hr class="divider">
+
+  <!-- ── Driveライブラリ ── -->
+  <div class="section">
+    <div class="section-head">
+      <span>Driveライブラリ</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="libCount" style="font-size:10px;color:var(--text-dim);letter-spacing:0"></span>
+        <button class="btn btn-outline btn-sm" onclick="loadDriveFiles()" id="reloadBtn">🔄 再読込</button>
+      </div>
+    </div>
+    <div class="prog-wrap" id="driveProg" style="margin-bottom:12px">
+      <div class="prog-bar"><div class="prog-fill" id="driveFill"></div></div>
+      <div class="prog-lbl" id="driveLbl"></div>
+    </div>
+    <div class="lib-legend" id="libLegend" style="margin-bottom:12px"></div>
+    <div class="lib-grid" id="libGrid">
+      <div class="lib-empty">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- ── 選択バー ── -->
+  <div class="sel-bar" id="selBar">
+    <div class="sel-bar-top">
+      <div class="sel-bar-count">✅ <span id="selCount">0</span>枚選択中</div>
+      <button class="btn btn-outline btn-sm" onclick="clearSelection()">✕ 解除</button>
+    </div>
+    <button class="btn btn-gold btn-full" style="font-size:15px;padding:14px" onclick="startConvert()">✨ AI読み取り開始</button>
+    <div class="prog-wrap" id="convertProg" style="margin-top:8px">
+      <div class="prog-bar"><div class="prog-fill" id="convertFill"></div></div>
+      <div class="prog-lbl" id="convertLbl"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── 確認・登録フォーム ── -->
+  <div class="section">
+    <div class="section-head"><span>確認・登録</span></div>
+    <div class="confirm-card" id="confirmCard">
+      <div id="confirm-loading" class="analyzing-msg">⏳ AI解析中...</div>
       <div id="confirm-form" style="display:none">
         <div class="confirm-img-wrap"><img id="confirm-img" src="" alt=""></div>
         <input type="hidden" id="edit-id">
         <input type="hidden" id="f-image-url">
-        <div class="ir">
-          <div class="il">サービスタイトル *</div>
+        <div class="field">
+          <div class="field-label">サービスタイトル *</div>
           <input class="inp" id="f-service-title" placeholder="例: 恋愛専門タロット占い">
         </div>
-        <div class="ir">
-          <div class="il">出品者名</div>
+        <div class="field">
+          <div class="field-label">出品者名</div>
           <input class="inp" id="f-seller-name" placeholder="例: 星詠み師あかり">
         </div>
-        <div class="row2 ir">
+        <div class="row2 field">
           <div>
-            <div class="il">価格（円）</div>
+            <div class="field-label">価格（円）</div>
             <input class="inp" id="f-price" placeholder="3000">
           </div>
           <div>
-            <div class="il">評価数</div>
+            <div class="field-label">評価数</div>
             <input class="inp" id="f-reviews" placeholder="482">
           </div>
         </div>
-        <div class="ir">
-          <div class="il">カテゴリ</div>
+        <div class="field">
+          <div class="field-label">カテゴリ</div>
           <select class="inp" id="f-category">
             <option value="">選択してください</option>
             <option>タロット</option><option>占星術</option><option>数秘術</option>
             <option>手相</option><option>霊視</option><option>その他</option>
           </select>
         </div>
-        <div class="ir">
-          <div class="il">プロフィール</div>
+        <div class="field">
+          <div class="field-label">プロフィール</div>
           <textarea class="inp" id="f-seller-profile" rows="3"></textarea>
         </div>
-        <div class="ir">
-          <div class="il">キャプション</div>
+        <div class="field">
+          <div class="field-label">キャプション</div>
           <textarea class="inp" id="f-caption" rows="5"></textarea>
         </div>
-        <div class="ir">
-          <div class="il">メモ・所感</div>
-          <textarea class="inp" id="f-notes" rows="3"></textarea>
+        <div class="field">
+          <div class="field-label">メモ・所感</div>
+          <textarea class="inp" id="f-notes" rows="3" placeholder="気になった点など"></textarea>
         </div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-outline" style="flex:1" onclick="switchTab('library')">← 戻る</button>
-          <button class="btn btn-primary" style="flex:2" id="save-btn" onclick="saveEntry()">✅ 登録する</button>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-outline" style="flex:1" onclick="cancelConfirm()">キャンセル</button>
+          <button class="btn btn-gold" style="flex:2" id="save-btn" onclick="saveEntry()">✅ 登録する</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── 一覧 ── -->
-  <div class="page" id="page-list">
+  <hr class="divider">
+
+  <!-- ── 登録済み一覧 ── -->
+  <div class="section">
+    <div class="section-head"><span>登録済みデータ</span></div>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input class="search-inp" id="search-input" placeholder="タイトル・出品者・キャプションで検索" oninput="onSearch()">
     </div>
-    <div class="cat-scroll" id="cat-filters"></div>
+    <div class="cat-pills" id="cat-filters"></div>
     <div id="entries-container"></div>
   </div>
 
-  <!-- ── 詳細 ── -->
-  <div class="page" id="page-detail">
-    <div class="card">
-      <button style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:12px;padding:0;font-family:'Noto Sans JP',sans-serif" onclick="switchTab('list')">← 一覧に戻る</button>
-      <div id="detail-content"></div>
-    </div>
-  </div>
-
 </div><!-- /main -->
-
-<nav class="tabbar">
-  <button class="tab active" id="tab-library" onclick="switchTab('library')">
-    <span class="tab-icon">📁</span><span class="tab-lbl">ライブラリ</span>
-  </button>
-  <button class="tab" id="tab-confirm" onclick="switchTab('confirm')">
-    <span class="tab-icon">✨</span><span class="tab-lbl">確認・登録</span>
-  </button>
-  <button class="tab" id="tab-list" onclick="switchTab('list')">
-    <span class="tab-icon">📋</span><span class="tab-lbl">一覧</span>
-  </button>
-</nav>
-
-</div><!-- /app -->
 
 <script>
 const CATEGORIES = ['すべて','タロット','占星術','数秘術','手相','霊視','その他'];
 let currentFilter  = 'すべて';
 let searchTimer    = null;
-let selectedImages = new Map(); // driveId -> img obj
-// state.imagesは占いスタジオと同じ構造: {driveId, name, url, thumb, cloudinaryUrl}
-const state = { images: [] };
+let selectedImages = new Map();
+const state        = { images: [] };
 
-// ── タブ切替 ───────────────────────────────────────────────
-function switchTab(name) {
-  ['library','confirm','list','detail'].forEach(n => {
-    document.getElementById('page-' + n).classList.toggle('active', n === name);
-  });
-  ['library','confirm','list'].forEach(n => {
-    const t = document.getElementById('tab-' + n);
-    if (t) t.classList.toggle('active', n === name);
-  });
-  if (name === 'list') loadEntries();
-}
+// ── Init ──────────────────────────────────────────────────
+initCats();
+loadEntries();
+loadDriveFiles();
 
-// ── アップロード ──────────────────────────────────────────
+// ── Upload ────────────────────────────────────────────────
 async function handleUpload(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const file = input.files[0]; if (!file) return;
   const prog = document.getElementById('upProg');
   const fill = document.getElementById('upFill');
   const lbl  = document.getElementById('upLbl');
-  prog.classList.add('show');
-  fill.style.width = '10%';
-  lbl.textContent  = 'アップロード中...';
-
+  prog.classList.add('show'); fill.style.width = '10%'; lbl.textContent = 'アップロード中...';
   let ticker = setInterval(() => {
     const cur = parseFloat(fill.style.width) || 10;
-    fill.style.width = Math.min(cur + Math.random() * 18, 85) + '%';
+    fill.style.width = Math.min(cur + Math.random()*18, 85) + '%';
   }, 350);
-
   try {
     const fd = new FormData();
-    fd.append('file', file);
-    fd.append('file_name', file.name);
+    fd.append('file', file); fd.append('file_name', file.name);
     const res  = await fetch('/upload', { method:'POST', body: fd });
     if (!res.ok) throw new Error('サーバーエラー: ' + res.status);
     const data = await res.json();
-    clearInterval(ticker);
-    fill.style.width = '100%';
+    clearInterval(ticker); fill.style.width = '100%';
     const url = data.drive_url || data.temp_url || '';
-    if (!url) throw new Error(data.error || 'URLの取得に失敗しました');
-    lbl.textContent = data.drive_url ? '✓ Driveに保存しました！' : '✓ 一時URLを取得しました';
+    if (!url) throw new Error(data.error || 'URLの取得に失敗');
+    lbl.textContent = data.drive_url ? '✓ Driveに保存しました' : '✓ アップロード完了';
     document.getElementById('lastUrlTag').innerHTML =
-      '<div class="url-tag"><div class="url-tag-txt">' + url + '</div><div>📋</div></div>';
+      '<div class="url-tag" onclick="copyText(\'' + url + '\')"><div class="url-tag-txt">' + url + '</div><span>📋</span></div>';
     toast('✓ ' + (data.drive_url ? 'Driveに保存しました' : 'アップロード完了'), 'ok');
     setTimeout(() => { prog.classList.remove('show'); fill.style.width='0%'; }, 2000);
   } catch(e) {
-    clearInterval(ticker);
-    fill.style.width = '0%';
-    prog.classList.remove('show');
+    clearInterval(ticker); fill.style.width='0%'; prog.classList.remove('show');
     toast('⚠ ' + e.message, 'err');
   }
   input.value = '';
 }
 
-// ── Drive一覧（占いスタジオと同じキャッシュ付き） ─────────────
+// ── Drive一覧 ─────────────────────────────────────────────
 async function loadDriveFiles() {
   const btn  = document.getElementById('reloadBtn');
-  const load = document.getElementById('driveLoading');
+  const prog = document.getElementById('driveProg');
   const fill = document.getElementById('driveFill');
   const lbl  = document.getElementById('driveLbl');
   btn.disabled = true;
-  load.style.display = 'block';
-  fill.style.width = '10%';
-  lbl.textContent = 'Driveから読み込み中...';
-
+  prog.classList.add('show'); fill.style.width = '10%'; lbl.textContent = 'Driveから読み込み中...';
   let ticker = setInterval(() => {
     const cur = parseFloat(fill.style.width) || 10;
     fill.style.width = Math.min(cur + 15, 85) + '%';
   }, 400);
-
   try {
-    const res  = await fetch('/drive/list', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({})
-    });
+    const res  = await fetch('/drive/list', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
     const data = await res.json();
     clearInterval(ticker);
     if (data.error) { toast('⚠ ' + data.error, 'err'); return; }
     if (!Array.isArray(data)) { toast('⚠ データ形式エラー', 'err'); return; }
 
-    // 占いスタジオと同じstate.images構造に変換
     state.images = data.map(f => ({
-      driveId:       f.id,
-      name:          (f.name || f.title || f.id).replace(/\.[^.]+$/, ''),
-      url:           'https://drive.google.com/uc?export=view&id=' + f.id,
-      thumb:         '/proxy/image?id=' + f.id,
+      driveId: f.id,
+      name: (f.name || f.title || f.id).replace(/\.[^.]+$/, ''),
+      url: 'https://drive.google.com/uc?export=view&id=' + f.id,
+      thumb: '/proxy/image?id=' + f.id,
       cloudinaryUrl: '',
     }));
 
-    // 非表示IDを取得してフィルタリング
+    // 非表示フィルタ
     try {
-      const hideRes  = await fetch('/library/hidden/list', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+      const hideRes   = await fetch('/library/hidden/list', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
       const hiddenIds = await hideRes.json();
-      if (Array.isArray(hiddenIds) && hiddenIds.length) {
+      if (Array.isArray(hiddenIds) && hiddenIds.length)
         state.images = state.images.filter(img => !hiddenIds.includes(img.driveId));
-      }
-    } catch(e) { console.warn('hidden list error:', e); }
+    } catch(e) {}
 
-    // DBからCloudinaryキャッシュを取得（占いスタジオと同じ）
+    // Cloudinaryキャッシュ
     const driveIds = state.images.map(i => i.driveId).filter(Boolean);
     if (driveIds.length) {
       try {
-        const cacheRes  = await fetch('/library/cloudinary/list', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ file_ids: driveIds })
-        });
+        const cacheRes  = await fetch('/library/cloudinary/list', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ file_ids: driveIds }) });
         const cacheData = await cacheRes.json();
-        state.images.forEach(img => {
-          if (img.driveId && cacheData[img.driveId]) {
-            img.cloudinaryUrl = cacheData[img.driveId];
-          }
-        });
-      } catch(e) { console.warn('cache load error:', e); }
+        state.images.forEach(img => { if (cacheData[img.driveId]) img.cloudinaryUrl = cacheData[img.driveId]; });
+      } catch(e) {}
     }
 
-    fill.style.width = '100%';
-    lbl.textContent  = '✓ ' + state.images.length + '枚読み込みました';
+    fill.style.width = '100%'; lbl.textContent = '✓ ' + state.images.length + '枚読み込みました';
     renderLibrary();
     toast('✓ ' + state.images.length + '枚読み込みました', 'ok');
   } catch(e) {
-    clearInterval(ticker);
-    toast('⚠ ' + e.message, 'err');
+    clearInterval(ticker); toast('⚠ ' + e.message, 'err');
   } finally {
     btn.disabled = false;
-    setTimeout(() => { load.style.display='none'; fill.style.width='0%'; }, 1500);
+    setTimeout(() => { prog.classList.remove('show'); fill.style.width='0%'; }, 1500);
   }
 }
 
@@ -467,19 +519,12 @@ function renderLibrary() {
   const grid   = document.getElementById('libGrid');
   const legend = document.getElementById('libLegend');
   document.getElementById('libCount').textContent = state.images.length + '枚';
+  if (!state.images.length) { grid.innerHTML = '<div class="lib-empty">ファイルが見つかりませんでした</div>'; return; }
 
-  if (!state.images.length) {
-    grid.innerHTML = '<div class="lib-empty">ファイルが見つかりませんでした</div>';
-    return;
-  }
-
-  // 凡例（占いスタジオと同じ）
-  const converted = state.images.filter(img => img.cloudinaryUrl).length;
+  const converted = state.images.filter(i => i.cloudinaryUrl).length;
   legend.innerHTML =
-    '<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)">' +
-    '<span style="width:10px;height:10px;border-radius:2px;border:2px solid #444;display:inline-block"></span>未変換 ' + (state.images.length - converted) + '枚</span>' +
-    '<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)">' +
-    '<span style="width:10px;height:10px;border-radius:2px;border:2px solid #7c3aed;background:rgba(124,58,237,0.2);display:inline-block"></span>変換済 ' + converted + '枚</span>';
+    '<div class="legend-item"><div class="legend-dot" style="border:2px solid #444"></div>未変換 ' + (state.images.length - converted) + '枚</div>' +
+    '<div class="legend-item"><div class="legend-dot" style="background:rgba(201,168,76,.2);border:2px solid var(--gold)"></div>変換済 ' + converted + '枚</div>';
 
   grid.innerHTML = '';
   state.images.forEach(img => {
@@ -488,31 +533,26 @@ function renderLibrary() {
     const div      = document.createElement('div');
     div.className  = 'lib-item' + (sel ? ' sel' : '');
     div.id         = 'li-' + img.driveId;
-    div.style.border = '2px solid ' + (hasCloud ? '#7c3aed' : '#333');
-    div.style.background = hasCloud ? 'rgba(124,58,237,0.05)' : '';
+    if (hasCloud) { div.style.borderColor = 'var(--gold)'; div.style.background = 'rgba(201,168,76,0.05)'; }
 
     const badge = hasCloud
-      ? '<div style="position:absolute;top:4px;left:4px;background:#7c3aed;color:#fff;font-size:8px;padding:2px 6px;border-radius:8px;font-weight:bold">☁ 変換済</div>'
-      : '<div style="position:absolute;top:4px;left:4px;background:#555;color:#ccc;font-size:8px;padding:2px 6px;border-radius:8px">未変換</div>';
+      ? '<div class="lib-badge converted">☁ 変換済</div>'
+      : '<div class="lib-badge raw">未変換</div>';
 
     const urlRow = hasCloud
-      ? '<div style="padding:3px 6px 5px;display:flex;align-items:center;gap:4px">' +
-        '<div style="font-size:8px;color:#a78bfa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + img.cloudinaryUrl + '</div>' +
-        '<button onclick="event.stopPropagation();copyText(\'' + img.cloudinaryUrl.replace(/'/g, "\\'") + '\')" style="background:rgba(124,58,237,0.2);border:none;color:#a78bfa;font-size:9px;padding:2px 5px;border-radius:4px;cursor:pointer;flex-shrink:0">📋</button>' +
-        '</div>'
-      : '';
-
-    const delBtn = '<button onclick="event.stopPropagation();hideFile(\'' + img.driveId + '\')" '
-      + 'style="position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(239,68,68,0.85);'
-      + 'border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>';
+      ? '<div style="padding:2px 5px 4px;display:flex;align-items:center;gap:3px">' +
+        '<div style="font-size:7px;color:var(--gold);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + img.cloudinaryUrl + '</div>' +
+        '<button onclick="event.stopPropagation();copyText(\'' + img.cloudinaryUrl.replace(/'/g,"\\'") + '\')" style="background:var(--gold-dim);border:none;color:var(--gold);font-size:8px;padding:1px 4px;border-radius:3px;cursor:pointer;flex-shrink:0">📋</button>' +
+        '</div>' : '';
 
     div.innerHTML =
       '<div style="position:relative">' +
       '<img src="' + img.thumb + '" onerror="this.src=\'' + img.url + '\';this.onerror=null" loading="lazy">' +
-      badge + delBtn +
+      badge +
+      '<button class="lib-del" onclick="event.stopPropagation();hideFile(\'' + img.driveId + '\')">✕</button>' +
       '<div class="sel-overlay"><div class="sel-check">✓</div></div>' +
       '</div>' +
-      '<div class="lib-lbl" style="font-size:9px;padding:4px 6px">' + img.name + '</div>' +
+      '<div class="lib-lbl">' + img.name + '</div>' +
       urlRow;
 
     div.onclick = () => toggleSel(img.driveId);
@@ -521,119 +561,83 @@ function renderLibrary() {
 }
 
 function toggleSel(id) {
-  const img = state.images.find(i => i.driveId === id);
-  if (!img) return;
-  const el = document.getElementById('li-' + id);
-  if (selectedImages.has(id)) {
-    selectedImages.delete(id);
-    el.classList.remove('sel');
-  } else {
-    selectedImages.set(id, img);
-    el.classList.add('sel');
-  }
-  updateSelPanel();
+  const img = state.images.find(i => i.driveId === id); if (!img) return;
+  const el  = document.getElementById('li-' + id);
+  if (selectedImages.has(id)) { selectedImages.delete(id); el.classList.remove('sel'); }
+  else { selectedImages.set(id, img); el.classList.add('sel'); }
+  updateSelBar();
 }
 
 function clearSelection() {
-  selectedImages.forEach((v, id) => {
-    const el = document.getElementById('li-' + id);
-    if (el) el.classList.remove('sel');
-  });
-  selectedImages.clear();
-  updateSelPanel();
+  selectedImages.forEach((v, id) => { const el = document.getElementById('li-'+id); if(el) el.classList.remove('sel'); });
+  selectedImages.clear(); updateSelBar();
 }
 
-function updateSelPanel() {
-  const panel = document.getElementById('selPanel');
-  const cnt   = selectedImages.size;
-  panel.style.display = cnt > 0 ? 'block' : 'none';
+function updateSelBar() {
+  const bar = document.getElementById('selBar');
+  const cnt = selectedImages.size;
+  bar.classList.toggle('show', cnt > 0);
   document.getElementById('selCount').textContent = cnt;
 }
 
-// ── Cloudinary変換 → Vision AI ────────────────────────────
+async function hideFile(driveId) {
+  if (!confirm('このファイルをライブラリから非表示にしますか？')) return;
+  try {
+    await fetch('/library/hide', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ drive_file_id: driveId }) });
+    state.images = state.images.filter(i => i.driveId !== driveId);
+    selectedImages.delete(driveId);
+    updateSelBar(); renderLibrary();
+    toast('非表示にしました', 'ok');
+  } catch(e) { toast('⚠ ' + e.message, 'err'); }
+}
+
+// ── Cloudinary → Vision AI ────────────────────────────────
 async function startConvert() {
   if (!selectedImages.size) return;
   const f        = [...selectedImages.values()][0];
-  const driveUrl = f.url || ('https://drive.google.com/uc?export=view&id=' + f.driveId);
-
-  // 確認タブへ
-  switchTab('confirm');
+  const driveUrl = f.url;
+  const card     = document.getElementById('confirmCard');
+  card.classList.add('show');
   document.getElementById('confirm-loading').style.display = 'block';
   document.getElementById('confirm-loading').textContent   = '☁️ Cloudinaryに変換中...';
   document.getElementById('confirm-form').style.display    = 'none';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  // Step1: Cloudinary
   let cloudinaryUrl = '';
   try {
-    const res  = await fetch('/cloudinary/upload', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ drive_url: driveUrl, public_id: '' })
-    });
+    const res  = await fetch('/cloudinary/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ drive_url: driveUrl, public_id: '' }) });
     const data = await res.json();
-    if (!data.url) {
-      document.getElementById('confirm-loading').textContent = '⚠ Cloudinary変換失敗: ' + (data.error || '');
-      return;
-    }
+    if (!data.url) { document.getElementById('confirm-loading').textContent = '⚠ Cloudinary変換失敗: ' + (data.error||''); return; }
     cloudinaryUrl = data.url;
-    // DBにキャッシュ保存（占いスタジオと同じ）
-    fetch('/library/cloudinary/save', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ drive_file_id: f.driveId, cloudinary_url: cloudinaryUrl })
-    }).catch(() => {});
-    // state.images更新してバッジ再描画
+    fetch('/library/cloudinary/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ drive_file_id: f.driveId, cloudinary_url: cloudinaryUrl }) }).catch(()=>{});
     const stateImg = state.images.find(i => i.driveId === f.driveId);
     if (stateImg) { stateImg.cloudinaryUrl = cloudinaryUrl; renderLibrary(); }
-  } catch(e) {
-    document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
-    return;
-  }
+  } catch(e) { document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message; return; }
 
-  // Step2: Vision AI
   document.getElementById('confirm-loading').textContent = '🔍 AI読み取りリクエスト中...';
   let responseId = '';
   try {
-    const res  = await fetch('/analyze', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ image_url: cloudinaryUrl })
-    });
+    const res  = await fetch('/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ image_url: cloudinaryUrl }) });
     const data = await res.json();
-    if (!data.response_id) {
-      document.getElementById('confirm-loading').textContent = '⚠ AI読み取り失敗: ' + (data.error || '');
-      return;
-    }
+    if (!data.response_id) { document.getElementById('confirm-loading').textContent = '⚠ AI読み取り失敗: ' + (data.error||''); return; }
     responseId = data.response_id;
-  } catch(e) {
-    document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
-    return;
-  }
+  } catch(e) { document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message; return; }
 
-  // Step3: ポーリング
   pollResult(responseId, cloudinaryUrl, 0);
 }
 
 function pollResult(responseId, cloudinaryUrl, attempt) {
-  if (attempt > 20) {
-    document.getElementById('confirm-loading').textContent = '⚠ タイムアウト。もう一度お試しください';
-    return;
-  }
+  if (attempt > 20) { document.getElementById('confirm-loading').textContent = '⚠ タイムアウト'; return; }
   document.getElementById('confirm-loading').textContent = '⏳ AI解析中... (' + (attempt+1) + ')';
   setTimeout(async () => {
     try {
-      const res  = await fetch('/analyze/result', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ response_id: responseId })
-      });
+      const res  = await fetch('/analyze/result', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ response_id: responseId }) });
       const data = await res.json();
       if (data.status === 'processing') { pollResult(responseId, cloudinaryUrl, attempt+1); return; }
       if (data.status === 'done' && data.data) { fillConfirmForm(data.data, cloudinaryUrl); return; }
-      if (data.status === 'error') {
-        document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + (data.error||'');
-        return;
-      }
+      if (data.status === 'error') { document.getElementById('confirm-loading').textContent = '⚠ ' + (data.error||'エラー'); return; }
       pollResult(responseId, cloudinaryUrl, attempt+1);
-    } catch(e) {
-      document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
-    }
+    } catch(e) { document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message; }
   }, 2000);
 }
 
@@ -652,6 +656,12 @@ function fillConfirmForm(d, imageUrl) {
   document.getElementById('edit-id').value          = '';
   document.getElementById('confirm-img').src        = imageUrl;
   document.getElementById('save-btn').textContent   = '✅ 登録する';
+}
+
+function cancelConfirm() {
+  document.getElementById('confirmCard').classList.remove('show');
+  document.getElementById('confirm-form').style.display = 'none';
+  document.getElementById('confirm-loading').style.display = 'block';
 }
 
 // ── 保存 ──────────────────────────────────────────────────
@@ -673,20 +683,15 @@ async function saveEntry() {
     notes:          document.getElementById('f-notes').value,
   };
   const url = editId ? '/research/entries/' + editId : '/research/entries';
-  const res = await fetch(url, {
-    method: editId ? 'PUT' : 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
+  const res = await fetch(url, { method: editId?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
   btn.disabled = false;
   if (res.ok) {
-    toast('✓ ' + (editId ? '更新しました' : '登録しました！'), 'ok');
-    clearSelection();
-    switchTab('list');
+    toast('✓ ' + (editId?'更新しました':'登録しました！'), 'ok');
+    cancelConfirm(); clearSelection(); loadEntries();
   } else {
     const d = await res.json();
-    btn.textContent = editId ? '更新する' : '✅ 登録する';
-    toast('⚠ ' + (d.error || 'エラーが発生しました'), 'err');
+    btn.textContent = editId?'更新する':'✅ 登録する';
+    toast('⚠ ' + (d.error||'エラー'), 'err');
   }
 }
 
@@ -711,44 +716,51 @@ async function loadEntries() {
 function renderEntries(entries) {
   const el = document.getElementById('entries-container');
   if (!entries.length) {
-    el.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted2);font-size:13px">データがありません<br><br>ライブラリから画像を選択してAI読み取りしましょう</div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px">データがありません<br><br>ライブラリから画像を選択してAI読み取りしましょう</div>';
     return;
   }
-  el.innerHTML = entries.map(e => {
+  el.innerHTML = '<div class="entry-grid">' + entries.map(e => {
     const img   = e.image_url ? '<img class="entry-thumb" src="' + e.image_url + '" alt="" loading="lazy">' : '';
-    const badge = e.category  ? '<span class="cat-badge">' + e.category + '</span>' : '';
+    const badge = e.category  ? '<span class="entry-cat">' + e.category + '</span>' : '';
     const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'', e.reviews?'<span class="chip">★ '+e.reviews+'件</span>':''].filter(Boolean).join('');
-    const cap   = e.caption   ? '<div class="entry-cap">' + e.caption.slice(0,60) + '…</div>' : '';
+    const cap   = e.caption ? '<div class="entry-cap">' + e.caption.slice(0,60) + '…</div>' : '';
     return '<div class="entry-card" onclick="openDetail(' + e.id + ')">' + img +
       '<div class="entry-body">' + badge +
       '<div class="entry-title">' + e.service_title + '</div>' +
       (e.seller_name ? '<div class="entry-seller">@' + e.seller_name + '</div>' : '') +
       '<div class="entry-chips">' + chips + '</div>' + cap +
       '</div></div>';
-  }).join('');
+  }).join('') + '</div>';
 }
 
-// ── 詳細 ──────────────────────────────────────────────────
+// ── Detail ────────────────────────────────────────────────
 async function openDetail(id) {
   const res = await fetch('/research/entries/' + id);
   const e   = await res.json();
-  const img   = e.image_url ? '<img style="width:100%;border-radius:8px;margin-bottom:12px;display:block" src="' + e.image_url + '" alt="">' : '';
-  const badge = e.category  ? '<span class="cat-badge">' + e.category + '</span><br>' : '';
-  const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'', e.reviews?'<span class="chip">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
+  const img   = e.image_url ? '<img class="detail-img" src="' + e.image_url + '" alt="">' : '';
+  const badge = e.category  ? '<span class="entry-cat" style="margin-bottom:8px;display:inline-block">' + e.category + '</span>' : '';
+  const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'',e.reviews?'<span class="chip">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
   const prof  = e.seller_profile ? '<div class="detail-sec"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
   const cap   = e.caption ? '<div class="detail-sec"><div class="detail-sec-title">キャプション</div><div class="detail-text">' + e.caption + '</div></div>' : '';
   const notes = e.notes   ? '<div class="detail-sec"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">' + e.notes + '</div></div>' : '';
-  document.getElementById('detail-content').innerHTML = img + badge +
-    '<div style="font-size:16px;font-weight:700;margin-bottom:4px;line-height:1.4">' + e.service_title + '</div>' +
-    (e.seller_name ? '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">出品者: ' + e.seller_name + '</div>' : '') +
-    '<div class="entry-chips" style="margin-bottom:12px">' + chips + '</div>' +
-    prof + cap + notes +
-    '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
-    '<div style="font-size:11px;color:var(--muted);flex:1">登録: ' + e.created_at + '</div>' +
+  document.getElementById('detail-modal').innerHTML = img +
+    '<div class="detail-body">' + badge +
+    '<div style="font-size:17px;font-weight:700;margin-bottom:4px;line-height:1.4;font-family:\'Cormorant Garamond\',serif">' + e.service_title + '</div>' +
+    (e.seller_name ? '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">出品者: ' + e.seller_name + '</div>' : '') +
+    '<div class="entry-chips" style="margin-bottom:14px">' + chips + '</div>' +
+    prof + cap + notes + '</div>' +
+    '<div class="detail-foot">' +
+    '<div class="detail-date">登録: ' + e.created_at + '</div>' +
+    '<div style="display:flex;gap:8px">' +
     '<button class="btn btn-outline btn-sm" onclick="startEdit(' + e.id + ')">✏️ 編集</button>' +
-    '<button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.2)" onclick="if(confirm(\'削除しますか？\'))deleteEntry(' + e.id + ')">🗑</button>' +
-    '</div>';
-  switchTab('detail');
+    '<button class="btn btn-red btn-sm" onclick="if(confirm(\'削除しますか？\'))deleteEntry(' + e.id + ')">🗑</button>' +
+    '</div></div>';
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detail-overlay'))
+    document.getElementById('detail-overlay').classList.remove('show');
 }
 
 async function startEdit(id) {
@@ -768,55 +780,31 @@ async function startEdit(id) {
   document.getElementById('confirm-loading').style.display = 'none';
   document.getElementById('confirm-form').style.display    = 'block';
   document.getElementById('save-btn').textContent   = '更新する';
-  switchTab('confirm');
+  document.getElementById('confirmCard').classList.add('show');
+  document.getElementById('detail-overlay').classList.remove('show');
+  document.getElementById('confirmCard').scrollIntoView({ behavior:'smooth' });
 }
 
 async function deleteEntry(id) {
   await fetch('/research/entries/' + id, { method:'DELETE' });
-  toast('削除しました', 'ok');
-  switchTab('list');
+  document.getElementById('detail-overlay').classList.remove('show');
+  toast('削除しました', 'ok'); loadEntries();
 }
 
-// ── Toast ─────────────────────────────────────────────────
-function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + (type || '');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.className = '', 2800);
-}
-
-async function hideFile(driveId) {
-  if (!confirm('このファイルをライブラリから非表示にしますか？')) return;
-  try {
-    await fetch('/library/hide', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ drive_file_id: driveId })
-    });
-    // stateから除外して再描画
-    state.images = state.images.filter(i => i.driveId !== driveId);
-    selectedImages.delete(driveId);
-    updateSelPanel();
-    renderLibrary();
-    toast('非表示にしました', 'ok');
-  } catch(e) {
-    toast('エラー: ' + e.message, 'err');
-  }
-}
-
+// ── Helpers ───────────────────────────────────────────────
 function copyText(text) {
   navigator.clipboard.writeText(text).then(() => toast('📋 コピーしました', 'ok')).catch(() => {
-    const el = document.createElement('textarea');
-    el.value = text; document.body.appendChild(el); el.select();
-    document.execCommand('copy'); document.body.removeChild(el);
-    toast('📋 コピーしました', 'ok');
+    const el = document.createElement('textarea'); el.value = text;
+    document.body.appendChild(el); el.select(); document.execCommand('copy');
+    document.body.removeChild(el); toast('📋 コピーしました', 'ok');
   });
 }
 
-// ── Init ──────────────────────────────────────────────────
-initCats();
-loadEntries();
-loadDriveFiles(); // 起動時に自動読み込み
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show' + (type?' '+type:'');
+  clearTimeout(el._t); el._t = setTimeout(() => el.className = '', 2800);
+}
 </script>
 </body>
 </html>
