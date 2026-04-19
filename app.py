@@ -2,7 +2,6 @@ import os
 import uuid
 import re
 import json as json_lib
-import hashlib
 import time
 import threading
 import requests
@@ -26,7 +25,7 @@ BASE_URL              = os.environ.get('BASE_URL', '')
 DRIVE_FOLDER_ID       = os.environ.get('DRIVE_FOLDER_ID', '')
 
 
-# ── DB接続（占いスタジオと同じ） ───────────────────────────────
+# ── DB ───────────────────────────────────────────────────────
 def get_db():
     import psycopg2
     return psycopg2.connect(DATABASE_URL)
@@ -61,7 +60,7 @@ def init_db():
         print(f'init_db error: {e}')
 
 
-# ── 一時ファイル削除（占いスタジオと同じ） ────────────────────
+# ── 一時ファイル削除・配信（占いスタジオと同じ） ──────────────
 def delete_later(path, delay=1800):
     def _delete():
         time.sleep(delay)
@@ -71,34 +70,35 @@ def delete_later(path, delay=1800):
             pass
     threading.Thread(target=_delete, daemon=True).start()
 
-
-# ── 一時ファイル配信（占いスタジオと同じ） ────────────────────
 @app.route('/files/<filename>', methods=['GET'])
 def serve_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
 
-# ── Step1: ファイル受取 → /tmp保存 → Pabbly → Drive URL取得 ──
-# （占いスタジオの /upload と同じ実装）
-@app.route('/research/upload', methods=['POST'])
-def research_upload():
+# ── /upload: 占いスタジオと完全同一 ──────────────────────────
+@app.route('/upload', methods=['POST'])
+def upload():
     if 'file' not in request.files:
-        return jsonify({'error': 'fileが必要です'}), 400
+        return jsonify({'error': 'ファイルがありません'}), 400
 
-    file = request.files['file']
-    ext  = os.path.splitext(file.filename)[1].lower()
+    file       = request.files['file']
+    folder_id  = request.form.get('folderId', DRIVE_FOLDER_ID)
+    file_label = request.form.get('file_name', '')
+
+    ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
-        ext = '.jpg'  # 拡張子不明・非対応の場合はjpgとして扱う
+        ext = '.jpg'
 
     filename = str(uuid.uuid4()) + ext
     filepath = os.path.join(UPLOAD_DIR, filename)
     file.save(filepath)
 
-    # 一時公開URL
+    if not file_label:
+        file_label = file.filename or filename
+
     base     = BASE_URL.rstrip('/')
     temp_url = f'{base}/files/{filename}'
 
-    # Pabbly API → Drive保存
     drive_url = ''
     error_msg = ''
     try:
@@ -113,18 +113,16 @@ def research_upload():
             },
             json={
                 'url':       temp_url,
-                'folderId':  DRIVE_FOLDER_ID,
-                'file_name': filename,
+                'folderId':  folder_id,
+                'file_name': file_label,
             },
-            timeout=90,
+            timeout=30,
         )
         data = res.json()
-        print(f'Pabbly Drive upload response: {data}')
+        print(f'Pabbly upload response: {data}')
 
-        # {"done":true,"response":{"result":{"uploadedFileId":"..."}}}
         file_id = (
             data.get('response', {}).get('result', {}).get('uploadedFileId') or
-            data.get('result', {}).get('uploadedFileId') or
             data.get('id') or
             data.get('fileId') or
             data.get('data', {}).get('id') or
@@ -141,7 +139,7 @@ def research_upload():
             )
     except Exception as e:
         error_msg = str(e)
-        print(f'Pabbly Drive error: {e}')
+        print(f'Pabbly error: {e}')
 
     delete_later(filepath, 1800)
 
@@ -153,12 +151,12 @@ def research_upload():
     })
 
 
-# ── Step2: Drive URL → Cloudinary URL（Pabbly経由） ──────────
-# （占いスタジオの /cloudinary/upload と同じ実装）
-@app.route('/research/cloudinary', methods=['POST'])
-def research_cloudinary():
+# ── /cloudinary/upload: 占いスタジオと完全同一 ───────────────
+@app.route('/cloudinary/upload', methods=['POST'])
+def cloudinary_upload():
     data      = request.json or {}
     drive_url = data.get('drive_url', '')
+    public_id = data.get('public_id', '')
 
     if not PABBLY_CLOUDINARY_URL:
         return jsonify({'error': 'PABBLY_CLOUDINARY_URL が未設定'}), 500
@@ -176,7 +174,7 @@ def research_cloudinary():
                 'file':          drive_url,
                 'resource_type': 'image',
                 'upload_preset': 'ml_default',
-                'public_id':     '',
+                'public_id':     public_id,
                 'tags':          ''
             },
             timeout=60,
@@ -212,12 +210,11 @@ def research_cloudinary():
         return jsonify({'error': str(e)}), 500
 
 
-# ── Step3: Cloudinary URL → Pabbly Vision → response_id ─────
-# （占いスタジオの /accounts/analyze と同じ実装）
-COCONALA_VISION_PROMPT = '{"service_title":"サービスのタイトル（ページ最上部の大きな見出し）","seller_name":"出品者名・ハンドルネーム","seller_profile":"出品者のプロフィール文・自己紹介文","caption":"サービスの説明文・キャプション（できるだけ全文）","price":"価格（数字のみ、最安値、円マーク不要）","reviews":"評価件数（数字のみ）","category":"タロット / 占星術 / 数秘術 / 手相 / 霊視 / その他 のどれか1つ"} このスクリーンショットはコナラのサービスページです。上記JSON形式のみで返してください。JSONのみ、コードブロック不要。'
+# ── /analyze: Vision AI（Pabbly経由） ────────────────────────
+COCONALA_VISION_PROMPT = '{"service_title":"サービスのタイトル","seller_name":"出品者名","seller_profile":"プロフィール文","caption":"サービス説明文（できるだけ全文）","price":"価格（数字のみ、最安値）","reviews":"評価件数（数字のみ）","category":"タロット/占星術/数秘術/手相/霊視/その他 のどれか1つ"} このスクリーンショットはコナラのサービスページです。上記JSON形式のみで返してください。JSONのみ、コードブロック不要。'
 
-@app.route('/research/analyze', methods=['POST'])
-def research_analyze():
+@app.route('/analyze', methods=['POST'])
+def analyze():
     data      = request.json or {}
     image_url = data.get('image_url', '')
     if not image_url:
@@ -250,10 +247,9 @@ def research_analyze():
         return jsonify({'error': str(e)}), 500
 
 
-# ── Step4: ポーリングで結果取得 ──────────────────────────────
-# （占いスタジオの /accounts/result と同じ実装）
-@app.route('/research/result', methods=['POST'])
-def research_result():
+# ── /analyze/result: Vision結果ポーリング ────────────────────
+@app.route('/analyze/result', methods=['POST'])
+def analyze_result():
     data        = request.json or {}
     response_id = data.get('response_id', '')
     if not response_id:
@@ -479,7 +475,6 @@ def static_files(filename):
     return send_from_directory('static', filename)
 
 
-# ── 起動 ────────────────────────────────────────────────────
 init_db()
 
 if __name__ == '__main__':
