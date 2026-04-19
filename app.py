@@ -435,16 +435,28 @@ def analyze_result():
         except:
             result = {}
 
-        actual = result.get('data') or result
-        if isinstance(actual, str):
+        # Pabblyのレスポンス構造: {"data": {"raw_data": "{...actual JSON...}"}}
+        actual = {}
+        data_val = result.get('data', {})
+        if isinstance(data_val, dict) and 'raw_data' in data_val:
             try:
-                actual = json_lib.loads(re.sub(r'<=-\+\(\$@\$\)\+-=>', '_', actual))
+                actual = json_lib.loads(data_val['raw_data'])
+                print(f'[analyze/result] actual_status={actual.get("status")}')
             except:
-                pass
-        if not actual.get('output') and result.get('output'):
+                actual = data_val
+        elif isinstance(data_val, str):
+            try:
+                actual = json_lib.loads(data_val)
+            except:
+                actual = {}
+        else:
+            actual = data_val or result
+
+        if not actual:
             actual = result
 
         status = actual.get('status') or result.get('status') or ''
+        print(f'[analyze/result] status={status}')
         if status in ('queued', 'in_progress'):
             return jsonify({'status': 'processing'})
 
@@ -471,6 +483,7 @@ def analyze_result():
         except:
             pass
 
+        print(f'[analyze/result] text_content={text_content[:200]}')
         parsed = {}
         try:
             clean = re.sub(r'```json|```', '', text_content).strip()
