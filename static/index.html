@@ -2,465 +2,521 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RESEARCH VAULT</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
-:root{
-  --bg:#0d0d0f;--surface:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);
-  --gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--text:#e8e4dc;
-  --text-dim:rgba(232,228,220,0.45);--red:#e74c3c;--green:#27ae60;
+:root {
+  --bg:#0c0c14; --bg2:#11111c; --panel:#161625; --panel2:#1c1c2e;
+  --border:#252538; --accent:#7c3aed; --accent2:#a78bfa;
+  --green:#10b981; --green2:#34d399; --yellow:#f59e0b;
+  --red:#ef4444; --text:#e2e8f0; --muted:#64748b; --muted2:#3f3f5a;
+  --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse at 15% 15%,rgba(120,80,200,0.07) 0%,transparent 55%),
-             radial-gradient(ellipse at 85% 85%,rgba(200,120,50,0.05) 0%,transparent 55%)}
-header{position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);
-  background:rgba(13,13,15,0.92);backdrop-filter:blur(14px)}
-.header-inner{max-width:1100px;margin:0 auto;padding:15px 24px;
-  display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{font-size:20px;color:var(--gold)}
-.logo-text{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;letter-spacing:.22em}
-.header-count{font-size:12px;color:var(--text-dim)}
-nav{max-width:1100px;margin:0 auto;padding:16px 24px 0;display:flex;gap:8px;position:relative;z-index:1}
-.nav-btn{padding:8px 20px;border-radius:6px;border:1px solid var(--border);
-  background:transparent;color:var(--text-dim);cursor:pointer;font-size:13px;
-  font-family:'Noto Sans JP',sans-serif;transition:all .2s}
-.nav-btn.active,.nav-btn:hover{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
-main{max-width:1100px;margin:0 auto;padding:32px 24px 80px;position:relative;z-index:1}
-#toast{position:fixed;top:20px;right:20px;color:#fff;padding:10px 20px;border-radius:8px;
-  font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;
-  box-shadow:0 4px 20px rgba(0,0,0,.4)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100%;height:100dvh}
+
+/* Header */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:12px 16px;padding-top:max(12px,var(--st));
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-title{font-size:15px;font-weight:700;color:var(--accent2);letter-spacing:.05em}
+.hdr-count{font-size:11px;color:var(--muted)}
+
+/* Scroll */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.page{display:none;padding:16px;padding-bottom:28px}
+.page.active{display:block}
+
+/* Tabbar */
+.tabbar{background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;flex-shrink:0;padding-bottom:var(--sb);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;z-index:100}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px 6px;cursor:pointer;gap:3px;border:none;background:none;
+  color:var(--muted);transition:color .15s;touch-action:manipulation}
+.tab.active{color:var(--accent2)}
+.tab-icon{font-size:20px;line-height:1}
+.tab-lbl{font-size:9px;font-weight:700;letter-spacing:.04em}
+
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+
+/* Section head */
+.sh{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.15em;
+  text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sh::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px;flex-shrink:0}
+
+/* Buttons */
+.btn{font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;
+  padding:12px 16px;border:none;cursor:pointer;border-radius:8px;
+  letter-spacing:.04em;transition:all .15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-appearance:none;touch-action:manipulation}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:var(--accent);color:white}
+.btn-outline{background:var(--panel2);color:var(--accent2);border:1px solid var(--border)}
+.btn-full{width:100%}
+.btn-sm{padding:8px 12px;font-size:11px}
+
+/* Upload zone */
+.upzone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;
+  text-align:center;cursor:pointer;background:var(--bg2);position:relative;overflow:hidden;transition:all .2s}
+.upzone.drag{border-color:var(--accent);background:rgba(124,58,237,.08)}
+.upzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.up-icon{font-size:36px;margin-bottom:8px}
+.up-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.up-sub{font-size:11px;color:var(--muted)}
+
+/* Progress */
+.prog-wrap{display:none;margin-top:10px}
+.prog-wrap.show{display:block}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;width:0%;transition:width .3s}
+.prog-lbl{font-size:11px;color:var(--muted);text-align:center}
+
+/* Library grid */
+.lib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.lib-item{aspect-ratio:1;border-radius:8px;overflow:hidden;
+  border:2px solid var(--border);position:relative;cursor:pointer;
+  transition:border-color .15s;background:var(--bg2)}
+.lib-item:active{transform:scale(.96)}
+.lib-item.sel{border-color:var(--accent)}
+.lib-item img{width:100%;height:100%;object-fit:cover;display:block}
+.lib-lbl{position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,.75);font-size:8px;padding:3px 5px;
+  text-align:center;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-badge{position:absolute;top:4px;left:4px;font-size:8px;padding:2px 6px;border-radius:8px;font-weight:bold}
+.lib-badge.converted{background:#7c3aed;color:#fff}
+.lib-badge.raw{background:#555;color:#ccc}
+.lib-empty{grid-column:1/-1;text-align:center;padding:24px;color:var(--muted2);font-size:12px;line-height:2}
+
+/* URL tag */
+.url-tag{display:flex;align-items:center;gap:8px;
+  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+  border-radius:8px;padding:8px 12px;margin-top:8px;cursor:pointer}
+.url-tag-txt{flex:1;font-size:10px;color:var(--green2);word-break:break-all;line-height:1.5;font-family:monospace}
+
+/* Inputs */
+.inp{width:100%;background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;
+  padding:11px 12px;outline:none;border-radius:8px;transition:border-color .2s;-webkit-appearance:none}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--muted2)}
+textarea.inp{resize:none;line-height:1.6}
+select.inp option{background:var(--bg2)}
+.il{font-size:11px;color:var(--muted);margin-bottom:5px}
+.ir{margin-bottom:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* Confirm */
+.confirm-img-wrap{width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
+  border:1px solid var(--border);margin-bottom:12px;background:var(--bg2)}
+.confirm-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Toast */
+#toast{position:fixed;top:max(16px,var(--st));left:50%;transform:translateX(-50%);
+  background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+  padding:10px 18px;font-size:13px;font-weight:500;
+  opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;
+  white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 #toast.show{opacity:1}
+#toast.ok{border-color:var(--green);color:var(--green2)}
+#toast.err{border-color:var(--red);color:var(--red)}
 
-/* ── Drive選択ビュー ── */
-.drive-wrap{max-width:900px;margin:0 auto}
-.drive-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
-.drive-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold)}
-.drive-sub{font-size:13px;color:var(--text-dim);margin-bottom:20px}
-.load-btn{padding:10px 24px;background:linear-gradient(135deg,#c9a84c,#a07830);
-  border:none;border-radius:8px;color:#0d0d0f;cursor:pointer;font-size:13px;
-  font-weight:700;font-family:'Noto Sans JP',sans-serif}
-.load-btn:disabled{opacity:0.5;cursor:not-allowed}
-.drive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
-.drive-card{background:var(--surface);border:2px solid var(--border);border-radius:10px;
-  overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
-.drive-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-2px)}
-.drive-card.selected{border-color:var(--gold);background:rgba(201,168,76,0.08)}
-.drive-card img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
-.drive-card-name{font-size:10px;color:var(--text-dim);padding:6px 8px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.drive-check{position:absolute;top:6px;right:6px;width:22px;height:22px;
-  background:var(--gold);border-radius:50%;display:none;
-  align-items:center;justify-content:center;font-size:12px;color:#0d0d0f;font-weight:bold}
-.drive-card.selected .drive-check{display:flex}
-.selected-bar{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);
-  border-radius:8px;padding:12px 16px;margin-bottom:16px;
-  display:flex;align-items:center;justify-content:space-between}
-.selected-bar-text{font-size:13px;color:var(--gold)}
-.convert-btn{padding:10px 28px;background:linear-gradient(135deg,#c9a84c,#a07830);
-  border:none;border-radius:8px;color:#0d0d0f;cursor:pointer;font-size:13px;
-  font-weight:700;font-family:'Noto Sans JP',sans-serif}
-.convert-btn:disabled{opacity:0.5;cursor:not-allowed}
-.loading-msg{font-size:13px;color:var(--text-dim);padding:16px 0;text-align:center}
-.error-msg{color:var(--red);font-size:13px;padding:10px;background:rgba(231,76,60,0.08);
-  border-radius:6px;border:1px solid rgba(231,76,60,0.2);margin-bottom:12px}
+/* List / Detail */
+.entry-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.entry-card:active{border-color:var(--accent)}
+.entry-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--bg2)}
+.entry-body{padding:10px 12px}
+.entry-title{font-size:13px;font-weight:700;margin-bottom:3px;line-height:1.4}
+.entry-seller{font-size:11px;color:var(--muted);margin-bottom:6px}
+.entry-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.chip{padding:2px 8px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);
+  border-radius:10px;font-size:10px;color:var(--accent2)}
+.entry-cap{font-size:11px;color:var(--muted);line-height:1.5}
+.cat-badge{display:inline-block;padding:2px 8px;background:rgba(124,58,237,.2);
+  border:1px solid rgba(124,58,237,.3);border-radius:10px;font-size:10px;
+  color:var(--accent2);margin-bottom:6px}
 
-/* ── Confirm ── */
-.confirm-wrap{max-width:960px;margin:0 auto}
-.confirm-badge{display:inline-block;padding:4px 12px;background:rgba(39,174,96,0.15);
-  border:1px solid rgba(39,174,96,0.4);border-radius:20px;font-size:12px;color:var(--green);margin-bottom:10px}
-.confirm-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;
-  color:var(--gold);margin-bottom:24px}
-.confirm-grid{display:grid;grid-template-columns:280px 1fr;gap:28px;margin-bottom:24px}
-@media(max-width:700px){.confirm-grid{grid-template-columns:1fr}}
-.col-label{font-size:10px;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
-.confirm-img{width:100%;border-radius:10px;border:1px solid var(--border);display:block}
-label.field-label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;margin-top:10px}
-input,textarea,select{width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);
-  border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;
-  font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box}
-input:focus,textarea:focus,select:focus{border-color:rgba(201,168,76,0.5)}
-select option{background:#1a1a1e}
-textarea{resize:vertical}
-.row-fields{display:flex;gap:12px}
-.row-fields>div{flex:1}
-.form-actions{display:flex;gap:12px;justify-content:flex-end;
-  margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.07)}
-.cancel-btn{padding:10px 24px;background:transparent;border:1px solid rgba(255,255,255,0.15);
-  border-radius:6px;color:var(--text-dim);cursor:pointer;font-size:13px;font-family:'Noto Sans JP',sans-serif}
-.submit-btn{padding:10px 32px;background:linear-gradient(135deg,#c9a84c,#a07830);
-  border:none;border-radius:6px;color:#0d0d0f;cursor:pointer;font-size:13px;
-  font-weight:700;font-family:'Noto Sans JP',sans-serif;letter-spacing:.05em}
-.submit-btn:disabled{opacity:0.5;cursor:not-allowed}
+/* Search */
+.search-wrap{position:relative;margin-bottom:10px}
+.search-inp{width:100%;background:var(--panel);border:1px solid var(--border);
+  color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;
+  padding:11px 12px 11px 36px;outline:none;border-radius:8px;-webkit-appearance:none}
+.search-inp:focus{border-color:var(--accent)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.cat-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-pill{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:11px;
+  font-family:'Noto Sans JP',sans-serif;white-space:nowrap;transition:all .15s}
+.cat-pill.active{background:rgba(124,58,237,.2);border-color:var(--accent);color:var(--accent2)}
 
-/* ── Filter/Grid/Detail ── */
-.filter-bar{margin-bottom:24px;display:flex;flex-direction:column;gap:12px}
-.search-input{width:100%;padding:12px 16px;background:var(--surface);border:1px solid var(--border);
-  border-radius:8px;color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none}
-.search-input::placeholder{color:var(--text-dim)}
-.cat-filters{display:flex;flex-wrap:wrap;gap:8px}
-.cat-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);
-  background:transparent;color:var(--text-dim);cursor:pointer;font-size:12px;
-  font-family:'Noto Sans JP',sans-serif;transition:all .2s}
-.cat-btn.active,.cat-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);color:var(--gold)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s}
-.card:hover{border-color:rgba(201,168,76,0.35);transform:translateY(-2px)}
-.card-img-wrap{position:relative;aspect-ratio:16/9;overflow:hidden}
-.card-img{width:100%;height:100%;object-fit:cover;display:block}
-.card-no-img{width:100%;height:100%;background:rgba(255,255,255,0.03);
-  display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.18);font-size:12px}
-.badge{position:absolute;top:8px;left:8px;background:rgba(201,168,76,0.88);color:#0d0d0f;
-  font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;letter-spacing:.05em}
-.card-body{padding:14px 16px}
-.card-title{font-size:14px;font-weight:600;margin-bottom:4px;line-height:1.4}
-.card-seller{font-size:12px;color:var(--text-dim);margin-bottom:8px}
-.chips{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
-.chip{padding:2px 8px;background:rgba(255,255,255,0.06);border-radius:4px;font-size:11px;color:rgba(232,228,220,.7)}
-.card-caption{font-size:12px;color:var(--text-dim);line-height:1.5}
-.empty{text-align:center;padding:80px 20px;color:rgba(232,228,220,0.3)}
-.empty-icon{font-size:48px;color:rgba(201,168,76,0.3);margin-bottom:16px}
-.empty-title{font-size:18px;margin-bottom:8px;font-family:'Cormorant Garamond',serif}
-.empty-sub{font-size:13px}
-.back-btn{background:transparent;border:none;color:var(--text-dim);cursor:pointer;
-  font-size:13px;margin-bottom:20px;padding:0;font-family:'Noto Sans JP',sans-serif}
-.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.detail-img{width:100%;max-height:320px;object-fit:cover;display:block}
-.detail-head{padding:24px 28px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
-.detail-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin:6px 0 8px;line-height:1.4}
-.detail-seller{font-size:13px;color:var(--text-dim);margin-bottom:10px}
-.chip-lg{padding:4px 12px;background:rgba(255,255,255,0.06);border-radius:6px;font-size:13px;color:var(--text)}
-.detail-section{padding:18px 28px;border-bottom:1px solid rgba(255,255,255,0.04)}
-.detail-sec-title{font-size:10px;letter-spacing:.15em;color:var(--gold);margin-bottom:10px;text-transform:uppercase}
-.detail-text{font-size:14px;line-height:1.8;color:rgba(232,228,220,0.8);white-space:pre-wrap}
-.note-text{background:rgba(201,168,76,0.05);padding:12px 16px;border-radius:8px;border-left:3px solid rgba(201,168,76,.4)}
-.detail-foot{padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
-.detail-date{font-size:11px;color:rgba(232,228,220,0.3)}
-.detail-actions{display:flex;gap:10px}
-.edit-btn{padding:7px 18px;background:var(--gold-dim);border:1px solid rgba(201,168,76,.35);
-  border-radius:6px;color:var(--gold);cursor:pointer;font-size:12px;font-family:'Noto Sans JP',sans-serif}
-.del-btn{padding:7px 18px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,.3);
-  border-radius:6px;color:var(--red);cursor:pointer;font-size:12px;font-family:'Noto Sans JP',sans-serif}
+/* Detail */
+.detail-sec{margin-bottom:14px}
+.detail-sec-title{font-size:9px;letter-spacing:.15em;color:var(--accent2);
+  text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.detail-text{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap}
+.note-text{background:rgba(124,58,237,.06);padding:10px 12px;
+  border-radius:8px;border-left:3px solid rgba(124,58,237,.4)}
 </style>
 </head>
 <body>
+<div class="app">
 
 <div id="toast"></div>
 
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <span class="logo-mark">◈</span>
-      <span class="logo-text">RESEARCH VAULT</span>
-    </div>
-    <div class="header-count">コナラ競合DB · <span id="total-count">0</span>件</div>
-  </div>
+<header class="hdr">
+  <div class="hdr-title">◈ RESEARCH VAULT</div>
+  <div class="hdr-count">競合DB · <span id="total-count">0</span>件</div>
 </header>
 
-<nav>
-  <button class="nav-btn active" id="nav-drive" onclick="showView('drive')">📁 Drive選択</button>
-  <button class="nav-btn" id="nav-upload" onclick="showView('upload')">📷 スクショ</button>
-  <button class="nav-btn" id="nav-list" onclick="showView('list')">一覧 (<span id="nav-count">0</span>)</button>
-</nav>
+<div class="main" id="mainScroll">
 
-<main>
+  <!-- ── ライブラリ ── -->
+  <div class="page active" id="page-library">
 
-  <!-- ── DRIVE選択ビュー ── -->
-  <div id="view-drive">
-    <div class="drive-wrap">
-      <div class="drive-header">
-        <div class="drive-title">◈ Driveから画像を選択</div>
-        <button class="load-btn" id="load-btn" onclick="loadDriveFiles()">📁 Driveから読み込む</button>
+    <!-- アップロード -->
+    <div class="card">
+      <div class="sh">画像をアップロード</div>
+      <div class="upzone" id="upzone">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(this)">
+        <div class="up-icon">📁</div>
+        <div class="up-title">タップして画像を選択</div>
+        <div class="up-sub">JPG / PNG / WEBP</div>
       </div>
-      <div class="drive-sub">Driveの画像を選択してAIで自動読み取りします</div>
-      <div id="drive-error" class="error-msg" style="display:none"></div>
-      <div id="drive-loading" class="loading-msg" style="display:none">読み込み中...</div>
-      <div id="selected-bar" class="selected-bar" style="display:none">
-        <div class="selected-bar-text">✅ <span id="selected-count">0</span>枚選択中</div>
-        <button class="convert-btn" id="convert-btn" onclick="startConvert()">✨ AI読み取り開始</button>
+      <div class="prog-wrap" id="upProg">
+        <div class="prog-bar"><div class="prog-fill" id="upFill"></div></div>
+        <div class="prog-lbl" id="upLbl">アップロード中...</div>
       </div>
-      <div id="drive-grid" class="drive-grid"></div>
+      <div id="lastUrlTag"></div>
     </div>
-  </div>
 
-
-  <!-- ── スクショアップロードビュー ── -->
-  <div id="view-upload" style="display:none">
-    <div style="max-width:600px;margin:0 auto">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold);margin-bottom:8px">◈ スクショをアップロード</div>
-      <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px">スクショをアップロードしてDriveに保存後、AI読み取りします</div>
-      <div id="up-error" class="error-msg" style="display:none"></div>
-      <input type="file" id="up-file" accept="image/*" style="display:none" onchange="onUpFileSelect(event)">
-      <div id="up-dropzone" style="border:2px dashed rgba(255,255,255,0.15);border-radius:16px;padding:48px 24px;text-align:center;cursor:pointer;background:var(--surface);margin-bottom:16px" onclick="document.getElementById('up-file').click()" ondrop="onUpDrop(event)" ondragover="event.preventDefault()">
-        <div id="up-placeholder">
-          <div style="font-size:48px;margin-bottom:12px">📱</div>
-          <div style="font-size:16px;margin-bottom:6px">ここにスクショをドロップ</div>
-          <div style="font-size:13px;color:var(--text-dim)">またはタップして選択</div>
-        </div>
-        <div id="up-preview-wrap" style="display:none">
-          <img id="up-preview" style="width:100%;max-height:400px;object-fit:contain;border-radius:14px;display:block" src="" alt="">
+    <!-- Drive ライブラリ -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="sh" style="margin-bottom:0">Driveライブラリ</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:var(--muted)" id="libCount">0枚</span>
+          <button class="btn btn-outline btn-sm" onclick="loadDriveFiles()" id="reloadBtn">🔄</button>
         </div>
       </div>
-      <div id="up-loading" class="loading-msg" style="display:none">アップロード中...</div>
-      <button id="up-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#c9a84c,#a07830);border:none;border-radius:10px;color:#0d0d0f;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;letter-spacing:.05em" onclick="startUpload()" disabled>📤 Driveにアップロード</button>
+      <div id="driveLoading" style="display:none;margin-bottom:8px">
+        <div class="prog-bar"><div class="prog-fill" id="driveFill"></div></div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:5px" id="driveLbl">読み込み中...</div>
+      </div>
+      <div id="libLegend" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>
+      <div class="lib-grid" id="libGrid">
+        <div class="lib-empty">🔄 読み込むボタンを押してDriveから取得</div>
+      </div>
     </div>
+
+    <!-- 選択パネル -->
+    <div class="card" id="selPanel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="sh" style="margin-bottom:0">選択中 <span id="selCount" style="color:var(--accent2)">0</span>枚</div>
+        <button class="btn btn-outline btn-sm" onclick="clearSelection()">✕ 解除</button>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="startConvert()">✨ AI読み取り開始</button>
+      <div class="prog-wrap" id="convertProg" style="margin-top:8px">
+        <div class="prog-bar"><div class="prog-fill" id="convertFill"></div></div>
+        <div class="prog-lbl" id="convertLbl"></div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- ── CONFIRM ── -->
-  <div id="view-confirm" style="display:none">
-    <div class="confirm-wrap">
-      <div class="confirm-badge">✅ 読み取り完了</div>
-      <div class="confirm-title">内容を確認・修正して登録</div>
-      <div id="confirm-loading" class="loading-msg" style="display:none">⏳ AI解析中...</div>
+  <!-- ── 確認・登録 ── -->
+  <div class="page" id="page-confirm">
+    <div class="card">
+      <div class="sh">AI読み取り結果を確認</div>
+      <div id="confirm-loading" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">⏳ AI解析中...</div>
       <div id="confirm-form" style="display:none">
-        <div class="confirm-grid">
+        <div class="confirm-img-wrap"><img id="confirm-img" src="" alt=""></div>
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="f-image-url">
+        <div class="ir">
+          <div class="il">サービスタイトル *</div>
+          <input class="inp" id="f-service-title" placeholder="例: 恋愛専門タロット占い">
+        </div>
+        <div class="ir">
+          <div class="il">出品者名</div>
+          <input class="inp" id="f-seller-name" placeholder="例: 星詠み師あかり">
+        </div>
+        <div class="row2 ir">
           <div>
-            <div class="col-label">元画像</div>
-            <img id="confirm-img" class="confirm-img" src="" alt="">
+            <div class="il">価格（円）</div>
+            <input class="inp" id="f-price" placeholder="3000">
           </div>
           <div>
-            <div class="col-label">抽出データ（修正可能）</div>
-            <input type="hidden" id="edit-id">
-            <input type="hidden" id="f-image-url">
-            <label class="field-label">サービスタイトル *</label>
-            <input id="f-service-title" placeholder="例: 恋愛専門タロット占い">
-            <label class="field-label">出品者名</label>
-            <input id="f-seller-name" placeholder="例: 星詠み師あかり">
-            <div class="row-fields">
-              <div><label class="field-label">価格（円）</label><input id="f-price" placeholder="3000"></div>
-              <div><label class="field-label">評価数</label><input id="f-reviews" placeholder="482"></div>
-            </div>
-            <label class="field-label">カテゴリ</label>
-            <select id="f-category">
-              <option value="">選択してください</option>
-              <option>タロット</option><option>占星術</option><option>数秘術</option>
-              <option>手相</option><option>霊視</option><option>その他</option>
-            </select>
-            <label class="field-label">プロフィール</label>
-            <textarea id="f-seller-profile" style="min-height:70px"></textarea>
-            <label class="field-label">キャプション</label>
-            <textarea id="f-caption" style="min-height:120px"></textarea>
-            <label class="field-label">メモ・所感</label>
-            <textarea id="f-notes" style="min-height:60px"></textarea>
+            <div class="il">評価数</div>
+            <input class="inp" id="f-reviews" placeholder="482">
           </div>
         </div>
-        <div class="form-actions">
-          <button class="cancel-btn" onclick="showView('drive')">← やり直す</button>
-          <button class="submit-btn" id="save-btn" onclick="saveEntry()">✅　登録する</button>
+        <div class="ir">
+          <div class="il">カテゴリ</div>
+          <select class="inp" id="f-category">
+            <option value="">選択してください</option>
+            <option>タロット</option><option>占星術</option><option>数秘術</option>
+            <option>手相</option><option>霊視</option><option>その他</option>
+          </select>
+        </div>
+        <div class="ir">
+          <div class="il">プロフィール</div>
+          <textarea class="inp" id="f-seller-profile" rows="3"></textarea>
+        </div>
+        <div class="ir">
+          <div class="il">キャプション</div>
+          <textarea class="inp" id="f-caption" rows="5"></textarea>
+        </div>
+        <div class="ir">
+          <div class="il">メモ・所感</div>
+          <textarea class="inp" id="f-notes" rows="3"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-outline" style="flex:1" onclick="switchTab('library')">← 戻る</button>
+          <button class="btn btn-primary" style="flex:2" id="save-btn" onclick="saveEntry()">✅ 登録する</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── LIST ── -->
-  <div id="view-list" style="display:none">
-    <div class="filter-bar">
-      <input class="search-input" id="search-input" placeholder="🔍　出品者名・タイトル・キャプションで検索" oninput="onSearch()">
-      <div class="cat-filters" id="cat-filters"></div>
+  <!-- ── 一覧 ── -->
+  <div class="page" id="page-list">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-inp" id="search-input" placeholder="タイトル・出品者・キャプションで検索" oninput="onSearch()">
     </div>
+    <div class="cat-scroll" id="cat-filters"></div>
     <div id="entries-container"></div>
   </div>
 
-  <!-- ── DETAIL ── -->
-  <div id="view-detail" style="display:none">
-    <button class="back-btn" onclick="showView('list')">← 一覧に戻る</button>
-    <div class="detail-card" id="detail-card"></div>
+  <!-- ── 詳細 ── -->
+  <div class="page" id="page-detail">
+    <div class="card">
+      <button style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:12px;padding:0;font-family:'Noto Sans JP',sans-serif" onclick="switchTab('list')">← 一覧に戻る</button>
+      <div id="detail-content"></div>
+    </div>
   </div>
 
-</main>
+</div><!-- /main -->
+
+<nav class="tabbar">
+  <button class="tab active" id="tab-library" onclick="switchTab('library')">
+    <span class="tab-icon">📁</span><span class="tab-lbl">ライブラリ</span>
+  </button>
+  <button class="tab" id="tab-confirm" onclick="switchTab('confirm')">
+    <span class="tab-icon">✨</span><span class="tab-lbl">確認・登録</span>
+  </button>
+  <button class="tab" id="tab-list" onclick="switchTab('list')">
+    <span class="tab-icon">📋</span><span class="tab-lbl">一覧</span>
+  </button>
+</nav>
+
+</div><!-- /app -->
 
 <script>
 const CATEGORIES = ['すべて','タロット','占星術','数秘術','手相','霊視','その他'];
 let currentFilter = 'すべて';
 let searchTimer   = null;
-let selectedFiles = new Map(); // id -> file obj
+let selectedImages = new Map(); // id -> file obj
+let driveFiles     = [];
 
-renderCatFilters();
-
-// ── View ─────────────────────────────────────────────────────
-function showView(v) {
-  ['drive','upload','confirm','list','detail'].forEach(n => {
-    document.getElementById('view-' + n).style.display = n === v ? 'block' : 'none';
+// ── タブ切替 ───────────────────────────────────────────────
+function switchTab(name) {
+  ['library','confirm','list','detail'].forEach(n => {
+    document.getElementById('page-' + n).classList.toggle('active', n === name);
   });
-  document.getElementById('nav-drive').className   = 'nav-btn' + (v==='drive'||v==='confirm' ? ' active' : '');
-  document.getElementById('nav-upload').className  = 'nav-btn' + (v==='upload' ? ' active' : '');
-  document.getElementById('nav-list').className    = 'nav-btn' + (v==='list'||v==='detail'   ? ' active' : '');
-  if (v === 'list') loadEntries();
+  ['library','confirm','list'].forEach(n => {
+    const t = document.getElementById('tab-' + n);
+    if (t) t.classList.toggle('active', n === name);
+  });
+  if (name === 'list') loadEntries();
 }
 
-// ── Drive読み込み ──────────────────────────────────────────
+// ── アップロード ──────────────────────────────────────────
+async function handleUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const prog = document.getElementById('upProg');
+  const fill = document.getElementById('upFill');
+  const lbl  = document.getElementById('upLbl');
+  prog.classList.add('show');
+  fill.style.width = '10%';
+  lbl.textContent  = 'アップロード中...';
+
+  let ticker = setInterval(() => {
+    const cur = parseFloat(fill.style.width) || 10;
+    fill.style.width = Math.min(cur + Math.random() * 18, 85) + '%';
+  }, 350);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('file_name', file.name);
+    const res  = await fetch('/upload', { method:'POST', body: fd });
+    if (!res.ok) throw new Error('サーバーエラー: ' + res.status);
+    const data = await res.json();
+    clearInterval(ticker);
+    fill.style.width = '100%';
+    const url = data.drive_url || data.temp_url || '';
+    if (!url) throw new Error(data.error || 'URLの取得に失敗しました');
+    lbl.textContent = data.drive_url ? '✓ Driveに保存しました！' : '✓ 一時URLを取得しました';
+    document.getElementById('lastUrlTag').innerHTML =
+      '<div class="url-tag"><div class="url-tag-txt">' + url + '</div><div>📋</div></div>';
+    toast('✓ ' + (data.drive_url ? 'Driveに保存しました' : 'アップロード完了'), 'ok');
+    setTimeout(() => { prog.classList.remove('show'); fill.style.width='0%'; }, 2000);
+  } catch(e) {
+    clearInterval(ticker);
+    fill.style.width = '0%';
+    prog.classList.remove('show');
+    toast('⚠ ' + e.message, 'err');
+  }
+  input.value = '';
+}
+
+// ── Drive一覧 ─────────────────────────────────────────────
 async function loadDriveFiles() {
-  const btn = document.getElementById('load-btn');
-  btn.disabled = true; btn.textContent = '読み込み中...';
-  document.getElementById('drive-error').style.display = 'none';
-  document.getElementById('drive-loading').style.display = 'block';
-  document.getElementById('drive-grid').innerHTML = '';
-  selectedFiles.clear();
-  updateSelectedBar();
+  const btn  = document.getElementById('reloadBtn');
+  const load = document.getElementById('driveLoading');
+  const fill = document.getElementById('driveFill');
+  const lbl  = document.getElementById('driveLbl');
+  btn.disabled = true;
+  load.style.display = 'block';
+  fill.style.width = '10%';
+
+  let ticker = setInterval(() => {
+    const cur = parseFloat(fill.style.width) || 10;
+    fill.style.width = Math.min(cur + 15, 85) + '%';
+  }, 400);
 
   try {
     const res  = await fetch('/drive/list', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({})
     });
     const data = await res.json();
-    if (data.error) { showDriveError(data.error); return; }
-    if (!Array.isArray(data) || data.length === 0) {
-      showDriveError('ファイルが見つかりませんでした');
-      return;
-    }
-    renderDriveGrid(data);
+    clearInterval(ticker);
+    fill.style.width = '100%';
+    if (data.error) { toast('⚠ ' + data.error, 'err'); return; }
+    if (!Array.isArray(data)) { toast('⚠ データ形式エラー', 'err'); return; }
+    driveFiles = data;
+    renderLibrary();
+    toast('✓ ' + data.length + '枚読み込みました', 'ok');
   } catch(e) {
-    showDriveError('エラー: ' + e.message);
+    clearInterval(ticker);
+    toast('⚠ ' + e.message, 'err');
   } finally {
-    btn.disabled = false; btn.textContent = '📁 Driveから読み込む';
-    document.getElementById('drive-loading').style.display = 'none';
+    btn.disabled = false;
+    setTimeout(() => { load.style.display='none'; fill.style.width='0%'; }, 1000);
   }
 }
 
-function renderDriveGrid(files) {
-  const grid = document.getElementById('drive-grid');
-  grid.innerHTML = files.map(f => {
+function renderLibrary() {
+  const grid   = document.getElementById('libGrid');
+  const legend = document.getElementById('libLegend');
+  document.getElementById('libCount').textContent = driveFiles.length + '枚';
+
+  if (!driveFiles.length) {
+    grid.innerHTML = '<div class="lib-empty">ファイルが見つかりませんでした</div>';
+    return;
+  }
+
+  grid.innerHTML = driveFiles.map(f => {
+    const sel   = selectedImages.has(f.id);
     const thumb = '/proxy/image?id=' + f.id;
-    const name  = f.name || f.title || f.id;
-    return '<div class="drive-card" id="dc-' + f.id + '" onclick="toggleSelect(\'' + f.id + '\',\'' + encodeURIComponent(JSON.stringify(f)) + '\')">' +
-      '<img src="' + thumb + '" alt="" onerror="this.style.display=\'none\'">' +
-      '<div class="drive-card-name">' + name + '</div>' +
-      '<div class="drive-check">✓</div>' +
+    const name  = (f.name || f.title || f.id).replace(/\.[^.]+$/, '');
+    return '<div class="lib-item' + (sel?' sel':'') + '" id="li-' + f.id + '" onclick="toggleSel(\'' + f.id + '\')">' +
+      '<img src="' + thumb + '" alt="" loading="lazy" onerror="this.parentNode.style.background=\'#1c1c2e\'">' +
+      '<div class="lib-badge raw" id="lb-' + f.id + '">未変換</div>' +
+      '<div class="lib-lbl">' + name + '</div>' +
       '</div>';
   }).join('');
 }
 
-function toggleSelect(id, encoded) {
-  const f = JSON.parse(decodeURIComponent(encoded));
-  const card = document.getElementById('dc-' + id);
-  if (selectedFiles.has(id)) {
-    selectedFiles.delete(id);
-    card.classList.remove('selected');
+function toggleSel(id) {
+  const f = driveFiles.find(f => f.id === id);
+  if (!f) return;
+  const el = document.getElementById('li-' + id);
+  if (selectedImages.has(id)) {
+    selectedImages.delete(id);
+    el.classList.remove('sel');
   } else {
-    selectedFiles.set(id, f);
-    card.classList.add('selected');
+    selectedImages.set(id, f);
+    el.classList.add('sel');
   }
-  updateSelectedBar();
+  updateSelPanel();
 }
 
-function updateSelectedBar() {
-  const bar = document.getElementById('selected-bar');
-  const cnt = selectedFiles.size;
-  bar.style.display = cnt > 0 ? 'flex' : 'none';
-  document.getElementById('selected-count').textContent = cnt;
+function clearSelection() {
+  selectedImages.forEach((v, id) => {
+    const el = document.getElementById('li-' + id);
+    if (el) el.classList.remove('sel');
+  });
+  selectedImages.clear();
+  updateSelPanel();
 }
 
-function showDriveError(msg) {
-  const el = document.getElementById('drive-error');
-  el.textContent = msg; el.style.display = 'block';
+function updateSelPanel() {
+  const panel = document.getElementById('selPanel');
+  const cnt   = selectedImages.size;
+  panel.style.display = cnt > 0 ? 'block' : 'none';
+  document.getElementById('selCount').textContent = cnt;
 }
-
-
-// ── スクショアップロード ─────────────────────────────────
-let upSelectedFile = null;
-
-function onUpFileSelect(e) { const f = e.target.files[0]; if(f) setUpPreview(f); }
-function onUpDrop(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) setUpPreview(f); }
-
-function setUpPreview(file) {
-  upSelectedFile = file;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('up-placeholder').style.display = 'none';
-    document.getElementById('up-preview-wrap').style.display = 'block';
-    document.getElementById('up-preview').src = ev.target.result;
-    document.getElementById('up-btn').disabled = false;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function startUpload() {
-  if (!upSelectedFile) return;
-  const btn = document.getElementById('up-btn');
-  btn.disabled = true;
-  document.getElementById('up-error').style.display = 'none';
-  document.getElementById('up-loading').style.display = 'block';
-  document.getElementById('up-loading').textContent = '📤 Driveにアップロード中...';
-
-  try {
-    const fd = new FormData();
-    fd.append('file', upSelectedFile);
-    fd.append('file_name', upSelectedFile.name);
-    const res  = await fetch('/upload', { method:'POST', body: fd });
-    const data = await res.json();
-    document.getElementById('up-loading').style.display = 'none';
-    if (data.drive_url) {
-      toast('✅ Driveに保存しました！');
-      // リセット
-      upSelectedFile = null;
-      document.getElementById('up-placeholder').style.display = 'block';
-      document.getElementById('up-preview-wrap').style.display = 'none';
-      document.getElementById('up-preview').src = '';
-      document.getElementById('up-file').value = '';
-      btn.disabled = true;
-    } else {
-      document.getElementById('up-error').textContent = data.error || 'アップロード失敗';
-      document.getElementById('up-error').style.display = 'block';
-      btn.disabled = false;
-    }
-  } catch(e) {
-    document.getElementById('up-loading').style.display = 'none';
-    document.getElementById('up-error').textContent = 'エラー: ' + e.message;
-    document.getElementById('up-error').style.display = 'block';
-    btn.disabled = false;
-  }
-}
-
 
 // ── Cloudinary変換 → Vision AI ────────────────────────────
 async function startConvert() {
-  if (selectedFiles.size === 0) return;
-  const file = [...selectedFiles.values()][0]; // 1枚目を処理
-  const driveUrl = 'https://drive.google.com/uc?export=view&id=' + file.id;
+  if (!selectedImages.size) return;
+  const f        = [...selectedImages.values()][0];
+  const driveUrl = 'https://drive.google.com/uc?export=view&id=' + f.id;
 
-  showView('confirm');
+  // 確認タブへ
+  switchTab('confirm');
   document.getElementById('confirm-loading').style.display = 'block';
-  document.getElementById('confirm-form').style.display = 'none';
+  document.getElementById('confirm-loading').textContent   = '☁️ Cloudinaryに変換中...';
+  document.getElementById('confirm-form').style.display    = 'none';
 
-  // Step1: Cloudinary変換
+  // Step1: Cloudinary
   let cloudinaryUrl = '';
   try {
     const res  = await fetch('/cloudinary/upload', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ drive_url: driveUrl, public_id: '' })
     });
     const data = await res.json();
     if (!data.url) {
-      document.getElementById('confirm-loading').textContent = 'Cloudinary変換失敗: ' + (data.error || '');
+      document.getElementById('confirm-loading').textContent = '⚠ Cloudinary変換失敗: ' + (data.error || '');
       return;
     }
     cloudinaryUrl = data.url;
+    // バッジ更新
+    const badge = document.getElementById('lb-' + f.id);
+    if (badge) { badge.textContent = '☁ 変換済'; badge.className = 'lib-badge converted'; }
   } catch(e) {
-    document.getElementById('confirm-loading').textContent = 'エラー: ' + e.message;
+    document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
     return;
   }
 
   // Step2: Vision AI
-  document.getElementById('confirm-loading').textContent = '🔍 AI読み取り中...';
+  document.getElementById('confirm-loading').textContent = '🔍 AI読み取りリクエスト中...';
   let responseId = '';
   try {
     const res  = await fetch('/analyze', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ image_url: cloudinaryUrl })
     });
     const data = await res.json();
     if (!data.response_id) {
-      document.getElementById('confirm-loading').textContent = 'AI読み取り失敗: ' + (data.error || '');
+      document.getElementById('confirm-loading').textContent = '⚠ AI読み取り失敗: ' + (data.error || '');
       return;
     }
     responseId = data.response_id;
   } catch(e) {
-    document.getElementById('confirm-loading').textContent = 'エラー: ' + e.message;
+    document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
     return;
   }
 
@@ -470,36 +526,33 @@ async function startConvert() {
 
 function pollResult(responseId, cloudinaryUrl, attempt) {
   if (attempt > 20) {
-    document.getElementById('confirm-loading').textContent = 'タイムアウト。やり直してください';
+    document.getElementById('confirm-loading').textContent = '⚠ タイムアウト。もう一度お試しください';
     return;
   }
   document.getElementById('confirm-loading').textContent = '⏳ AI解析中... (' + (attempt+1) + ')';
   setTimeout(async () => {
     try {
       const res  = await fetch('/analyze/result', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ response_id: responseId })
       });
       const data = await res.json();
       if (data.status === 'processing') { pollResult(responseId, cloudinaryUrl, attempt+1); return; }
-      if (data.status === 'done' && data.data) {
-        fillConfirmForm(data.data, cloudinaryUrl);
-        return;
-      }
+      if (data.status === 'done' && data.data) { fillConfirmForm(data.data, cloudinaryUrl); return; }
       if (data.status === 'error') {
-        document.getElementById('confirm-loading').textContent = 'エラー: ' + (data.error || '');
+        document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + (data.error||'');
         return;
       }
       pollResult(responseId, cloudinaryUrl, attempt+1);
     } catch(e) {
-      document.getElementById('confirm-loading').textContent = 'エラー: ' + e.message;
+      document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
     }
   }, 2000);
 }
 
 function fillConfirmForm(d, imageUrl) {
   document.getElementById('confirm-loading').style.display = 'none';
-  document.getElementById('confirm-form').style.display = 'block';
+  document.getElementById('confirm-form').style.display    = 'block';
   document.getElementById('f-service-title').value  = d.service_title  || '';
   document.getElementById('f-seller-name').value    = d.seller_name    || '';
   document.getElementById('f-seller-profile').value = d.seller_profile || '';
@@ -511,13 +564,13 @@ function fillConfirmForm(d, imageUrl) {
   document.getElementById('f-image-url').value      = imageUrl;
   document.getElementById('edit-id').value          = '';
   document.getElementById('confirm-img').src        = imageUrl;
-  document.getElementById('save-btn').textContent   = '✅　登録する';
+  document.getElementById('save-btn').textContent   = '✅ 登録する';
 }
 
 // ── 保存 ──────────────────────────────────────────────────
 async function saveEntry() {
   const title = document.getElementById('f-service-title').value.trim();
-  if (!title) { toast('サービスタイトルは必須です','error'); return; }
+  if (!title) { toast('サービスタイトルは必須です', 'err'); return; }
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '保存中...';
   const editId = document.getElementById('edit-id').value;
@@ -535,29 +588,28 @@ async function saveEntry() {
   const url = editId ? '/research/entries/' + editId : '/research/entries';
   const res = await fetch(url, {
     method: editId ? 'PUT' : 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type':'application/json'},
     body: JSON.stringify(body)
   });
   btn.disabled = false;
   if (res.ok) {
-    toast(editId ? '更新しました' : '登録しました！');
-    selectedFiles.clear();
-    updateSelectedBar();
-    showView('list');
+    toast('✓ ' + (editId ? '更新しました' : '登録しました！'), 'ok');
+    clearSelection();
+    switchTab('list');
   } else {
     const d = await res.json();
-    btn.textContent = editId ? '更新する' : '✅　登録する';
-    toast(d.error || 'エラーが発生しました', 'error');
+    btn.textContent = editId ? '更新する' : '✅ 登録する';
+    toast('⚠ ' + (d.error || 'エラーが発生しました'), 'err');
   }
 }
 
 // ── 一覧 ──────────────────────────────────────────────────
-function renderCatFilters() {
+function initCats() {
   document.getElementById('cat-filters').innerHTML = CATEGORIES.map(c =>
-    '<button class="cat-btn' + (c===currentFilter?' active':'') + '" onclick="setCategory(\'' + c + '\')">' + c + '</button>'
+    '<button class="cat-pill' + (c===currentFilter?' active':'') + '" onclick="setCategory(\'' + c + '\')">' + c + '</button>'
   ).join('');
 }
-function setCategory(cat) { currentFilter = cat; renderCatFilters(); loadEntries(); }
+function setCategory(cat) { currentFilter = cat; initCats(); loadEntries(); }
 function onSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(loadEntries, 300); }
 
 async function loadEntries() {
@@ -566,38 +618,50 @@ async function loadEntries() {
   const res    = await fetch('/research/entries?' + params);
   const entries = await res.json();
   document.getElementById('total-count').textContent = entries.length;
-  document.getElementById('nav-count').textContent   = entries.length;
   renderEntries(entries);
 }
 
 function renderEntries(entries) {
   const el = document.getElementById('entries-container');
   if (!entries.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div><div class="empty-title">データがありません</div><div class="empty-sub">「📁 Drive選択」からデータを追加しましょう</div></div>';
+    el.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--muted2);font-size:13px">データがありません<br><br>ライブラリから画像を選択してAI読み取りしましょう</div>';
     return;
   }
-  el.innerHTML = '<div class="grid">' + entries.map(e => cardHTML(e)).join('') + '</div>';
+  el.innerHTML = entries.map(e => {
+    const img   = e.image_url ? '<img class="entry-thumb" src="' + e.image_url + '" alt="" loading="lazy">' : '';
+    const badge = e.category  ? '<span class="cat-badge">' + e.category + '</span>' : '';
+    const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'', e.reviews?'<span class="chip">★ '+e.reviews+'件</span>':''].filter(Boolean).join('');
+    const cap   = e.caption   ? '<div class="entry-cap">' + e.caption.slice(0,60) + '…</div>' : '';
+    return '<div class="entry-card" onclick="openDetail(' + e.id + ')">' + img +
+      '<div class="entry-body">' + badge +
+      '<div class="entry-title">' + e.service_title + '</div>' +
+      (e.seller_name ? '<div class="entry-seller">@' + e.seller_name + '</div>' : '') +
+      '<div class="entry-chips">' + chips + '</div>' + cap +
+      '</div></div>';
+  }).join('');
 }
 
-function cardHTML(e) {
-  const img   = e.image_url ? '<img src="' + e.image_url + '" class="card-img" alt="">' : '<div class="card-no-img">No Image</div>';
-  const badge = e.category  ? '<span class="badge">' + e.category + '</span>' : '';
-  const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'',e.reviews?'<span class="chip">★ '+e.reviews+'件</span>':''].filter(Boolean).join('');
-  const cap   = e.caption   ? '<div class="card-caption">' + e.caption.slice(0,55) + '…</div>' : '';
-  return '<div class="card" onclick="openDetail(' + e.id + ')"><div class="card-img-wrap">' + img + badge + '</div><div class="card-body"><div class="card-title">' + e.service_title + '</div>' + (e.seller_name?'<div class="card-seller">@'+e.seller_name+'</div>':'') + '<div class="chips">' + chips + '</div>' + cap + '</div></div>';
-}
-
+// ── 詳細 ──────────────────────────────────────────────────
 async function openDetail(id) {
   const res = await fetch('/research/entries/' + id);
   const e   = await res.json();
-  const img   = e.image_url ? '<img src="' + e.image_url + '" class="detail-img" alt="">' : '';
-  const badge = e.category  ? '<span class="badge" style="position:static;margin-bottom:10px;display:inline-block">' + e.category + '</span>' : '';
-  const chips = [e.price?'<span class="chip-lg">¥'+e.price+'</span>':'',e.reviews?'<span class="chip-lg">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
-  const prof  = e.seller_profile ? '<div class="detail-section"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
-  const cap   = e.caption ? '<div class="detail-section"><div class="detail-sec-title">キャプション</div><div class="detail-text">' + e.caption + '</div></div>' : '';
-  const notes = e.notes   ? '<div class="detail-section"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">' + e.notes + '</div></div>' : '';
-  document.getElementById('detail-card').innerHTML = img + '<div class="detail-head">' + badge + '<div class="detail-title">' + e.service_title + '</div>' + (e.seller_name?'<div class="detail-seller">出品者: '+e.seller_name+'</div>':'') + '<div class="chips">' + chips + '</div></div>' + prof + cap + notes + '<div class="detail-foot"><div class="detail-date">登録: ' + e.created_at + '</div><div class="detail-actions"><button class="edit-btn" onclick="startEdit(' + e.id + ')">✏️ 編集</button><button class="del-btn" onclick="if(confirm(\'削除しますか？\'))deleteEntry(' + e.id + ')">🗑 削除</button></div></div>';
-  showView('detail');
+  const img   = e.image_url ? '<img style="width:100%;border-radius:8px;margin-bottom:12px;display:block" src="' + e.image_url + '" alt="">' : '';
+  const badge = e.category  ? '<span class="cat-badge">' + e.category + '</span><br>' : '';
+  const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'', e.reviews?'<span class="chip">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
+  const prof  = e.seller_profile ? '<div class="detail-sec"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
+  const cap   = e.caption ? '<div class="detail-sec"><div class="detail-sec-title">キャプション</div><div class="detail-text">' + e.caption + '</div></div>' : '';
+  const notes = e.notes   ? '<div class="detail-sec"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">' + e.notes + '</div></div>' : '';
+  document.getElementById('detail-content').innerHTML = img + badge +
+    '<div style="font-size:16px;font-weight:700;margin-bottom:4px;line-height:1.4">' + e.service_title + '</div>' +
+    (e.seller_name ? '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">出品者: ' + e.seller_name + '</div>' : '') +
+    '<div class="entry-chips" style="margin-bottom:12px">' + chips + '</div>' +
+    prof + cap + notes +
+    '<div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+    '<div style="font-size:11px;color:var(--muted);flex:1">登録: ' + e.created_at + '</div>' +
+    '<button class="btn btn-outline btn-sm" onclick="startEdit(' + e.id + ')">✏️ 編集</button>' +
+    '<button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.2)" onclick="if(confirm(\'削除しますか？\'))deleteEntry(' + e.id + ')">🗑</button>' +
+    '</div>';
+  switchTab('detail');
 }
 
 async function startEdit(id) {
@@ -615,24 +679,29 @@ async function startEdit(id) {
   document.getElementById('f-image-url').value      = e.image_url;
   document.getElementById('confirm-img').src        = e.image_url;
   document.getElementById('confirm-loading').style.display = 'none';
-  document.getElementById('confirm-form').style.display = 'block';
+  document.getElementById('confirm-form').style.display    = 'block';
   document.getElementById('save-btn').textContent   = '更新する';
-  showView('confirm');
+  switchTab('confirm');
 }
 
 async function deleteEntry(id) {
   await fetch('/research/entries/' + id, { method:'DELETE' });
-  toast('削除しました');
-  showView('list');
+  toast('削除しました', 'ok');
+  switchTab('list');
 }
 
+// ── Toast ─────────────────────────────────────────────────
 function toast(msg, type) {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.style.background = type==='error' ? '#e74c3c' : '#27ae60';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
+  el.className = 'show ' + (type || '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 2800);
 }
+
+// ── Init ──────────────────────────────────────────────────
+initCats();
+loadEntries();
 </script>
 </body>
 </html>
