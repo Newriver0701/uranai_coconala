@@ -116,13 +116,15 @@ def research_upload():
                 'folderId':  DRIVE_FOLDER_ID,
                 'file_name': filename,
             },
-            timeout=30,
+            timeout=90,
         )
         data = res.json()
         print(f'Pabbly Drive upload response: {data}')
 
+        # {"done":true,"response":{"result":{"uploadedFileId":"..."}}}
         file_id = (
             data.get('response', {}).get('result', {}).get('uploadedFileId') or
+            data.get('result', {}).get('uploadedFileId') or
             data.get('id') or
             data.get('fileId') or
             data.get('data', {}).get('id') or
