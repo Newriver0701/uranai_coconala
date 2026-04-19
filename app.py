@@ -348,7 +348,21 @@ def cloudinary_upload():
 
 
 # ── /analyze: Vision AI（Pabbly経由） ────────────────────────
-COCONALA_VISION_PROMPT = ("このスクリーンショットはコナラのサービスページです。ページに表示されているテキストをスクレイピングするように、要約・省略・改変は一切せず、書いてある文章を一字一句そのまま全て抽出してください。JSONのみ返してください。コードブロック不要。{\"service_title\":\"ページ最上部のサービスタイトルのテキストをそのまま全文\",\"seller_name\":\"出品者名のテキストをそのまま\",\"seller_profile\":\"出品者プロフィール欄のテキストを一字一句そのまま全文（省略禁止）\",\"caption\":\"サービス説明文・提供内容・注意事項など、ページ内の全ての説明テキストを省略なく全文（要約禁止・省略禁止・見えているテキストを全部そのまま）\",\"price\":\"最安値の価格（数字のみ・例:500）\",\"reviews\":\"評価件数（数字のみ・例:1204）\",\"category\":\"タロット/占星術/数秘術/手相/霊視/その他 のどれか1つ\"}重要:captionは絶対に要約せずページの説明文を全文そのまま入れること")
+COCONALA_VISION_PROMPT = (
+    "This is a screenshot of a Coconala service page (Japanese freelance marketplace). "
+    "Extract all visible text from the page and return ONLY a JSON object with these fields. "
+    "Do NOT summarize - copy the exact text as-is. "
+    "Return ONLY valid JSON, no markdown, no code blocks, no explanation.\n"
+    "{"
+    "\"service_title\": \"exact service title text from the top of the page\", "
+    "\"seller_name\": \"exact seller/provider name\", "
+    "\"seller_profile\": \"exact full profile/bio text of the seller, copy every word\", "
+    "\"caption\": \"exact full service description text, copy ALL paragraphs word by word without any omission\", "
+    "\"price\": \"lowest price number only (digits only, no yen sign, e.g. 500)\", "
+    "\"reviews\": \"review count number only (digits only, e.g. 1204)\", "
+    "\"category\": \"one of: タロット, 占星術, 数秘術, 手相, 霊視, その他\""
+    "}"
+)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
