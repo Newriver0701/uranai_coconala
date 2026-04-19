@@ -17,10 +17,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ── 環境変数（占いスタジオと完全共通） ────────────────────────
 DATABASE_URL          = os.environ.get('DATABASE_URL', '')
-PABBLY_API_URL        = os.environ.get('PABBLY_API_URL', '')       # Drive保存用
-PABBLY_CLOUDINARY_URL = os.environ.get('PABBLY_CLOUDINARY_URL', '') # Cloudinary変換用
-PABBLY_VISION_URL     = os.environ.get('PABBLY_VISION_URL', '')    # Vision AI用
-PABBLY_RESPONSE_URL   = os.environ.get('PABBLY_RESPONSE_URL', '')  # Vision結果取得用
+PABBLY_API_URL        = os.environ.get('PABBLY_API_URL', '')        # Drive保存用
+PABBLY_CLOUDINARY_URL = os.environ.get('PABBLY_CLOUDINARY_URL', '')  # Cloudinary変換用
+# 占いスタジオと同じくハードコード
+PABBLY_VISION_URL     = "https://connect.pabbly.com/backend/v1/step/execute/IjU3NmMwNTY0MDYzZTA0MzA1MjY0NT
 PABBLY_AUTH           = os.environ.get('PABBLY_AUTH', '')
 BASE_URL              = os.environ.get('BASE_URL', '')
 DRIVE_FOLDER_ID       = os.environ.get('DRIVE_FOLDER_ID', '')
@@ -88,7 +88,7 @@ def research_upload():
     file = request.files['file']
     ext  = os.path.splitext(file.filename)[1].lower()
     if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
-        return jsonify({'error': '非対応のファイル形式です'}), 400
+        ext = '.jpg'  # 拡張子不明・非対応の場合はjpgとして扱う
 
     filename = str(uuid.uuid4()) + ext
     filepath = os.path.join(UPLOAD_DIR, filename)
