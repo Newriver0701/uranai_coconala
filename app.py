@@ -360,6 +360,9 @@ def analyze():
         return jsonify({'error': 'PABBLY_VISION_URLが未設定'}), 500
 
     try:
+        print(f'[analyze] URL={PABBLY_VISION_URL[:60]}')
+        print(f'[analyze] AUTH={PABBLY_AUTH[:20] if PABBLY_AUTH else "EMPTY"}')
+        print(f'[analyze] image_url={image_url[:80]}')
         res = requests.post(
             PABBLY_VISION_URL,
             headers={
@@ -375,12 +378,14 @@ def analyze():
             },
             timeout=30
         )
+        print(f'[analyze] status={res.status_code} raw={res.text[:300]}')
         d = res.json()
         response_id = d.get('id') or (d.get('data') or {}).get('id') or ''
         if not response_id:
-            return jsonify({'error': 'response_id取得失敗', 'raw': str(d)[:200]}), 500
+            return jsonify({'error': 'response_id取得失敗', 'raw': str(d)[:300]}), 500
         return jsonify({'response_id': response_id})
     except Exception as e:
+        print(f'[analyze] exception={e}')
         return jsonify({'error': str(e)}), 500
 
 
