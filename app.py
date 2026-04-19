@@ -17,10 +17,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ── 環境変数（占いスタジオと完全共通） ────────────────────────
 DATABASE_URL          = os.environ.get('DATABASE_URL', '')
-PABBLY_API_URL        = os.environ.get('PABBLY_API_URL', '')        # Drive保存用
-PABBLY_CLOUDINARY_URL = os.environ.get('PABBLY_CLOUDINARY_URL', '')  # Cloudinary変換用
-# 占いスタジオと同じくハードコード
-PABBLY_VISION_URL     = "https://connect.pabbly.com/backend/v1/step/execute/IjU3NmMwNTY0MDYzZTA0MzA1MjY0NT
+PABBLY_API_URL        = os.environ.get('PABBLY_API_URL', '')
+PABBLY_CLOUDINARY_URL = os.environ.get('PABBLY_CLOUDINARY_URL', '')
+PABBLY_VISION_URL     = os.environ.get('PABBLY_VISION_URL', '')
+PABBLY_RESPONSE_URL   = os.environ.get('PABBLY_RESPONSE_URL', '')
 PABBLY_AUTH           = os.environ.get('PABBLY_AUTH', '')
 BASE_URL              = os.environ.get('BASE_URL', '')
 DRIVE_FOLDER_ID       = os.environ.get('DRIVE_FOLDER_ID', '')
