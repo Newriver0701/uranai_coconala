@@ -424,6 +424,15 @@ async function loadDriveFiles() {
       cloudinaryUrl: '',
     }));
 
+    // 非表示IDを取得してフィルタリング
+    try {
+      const hideRes  = await fetch('/library/hidden/list', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+      const hiddenIds = await hideRes.json();
+      if (Array.isArray(hiddenIds) && hiddenIds.length) {
+        state.images = state.images.filter(img => !hiddenIds.includes(img.driveId));
+      }
+    } catch(e) { console.warn('hidden list error:', e); }
+
     // DBからCloudinaryキャッシュを取得（占いスタジオと同じ）
     const driveIds = state.images.map(i => i.driveId).filter(Boolean);
     if (driveIds.length) {
@@ -493,10 +502,14 @@ function renderLibrary() {
         '</div>'
       : '';
 
+    const delBtn = '<button onclick="event.stopPropagation();hideFile(\'' + img.driveId + '\')" '
+      + 'style="position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(239,68,68,0.85);'
+      + 'border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>';
+
     div.innerHTML =
       '<div style="position:relative">' +
       '<img src="' + img.thumb + '" onerror="this.src=\'' + img.url + '\';this.onerror=null" loading="lazy">' +
-      badge +
+      badge + delBtn +
       '<div class="sel-overlay"><div class="sel-check">✓</div></div>' +
       '</div>' +
       '<div class="lib-lbl" style="font-size:9px;padding:4px 6px">' + img.name + '</div>' +
@@ -771,6 +784,24 @@ function toast(msg, type) {
   el.className = 'show ' + (type || '');
   clearTimeout(el._t);
   el._t = setTimeout(() => el.className = '', 2800);
+}
+
+async function hideFile(driveId) {
+  if (!confirm('このファイルをライブラリから非表示にしますか？')) return;
+  try {
+    await fetch('/library/hide', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ drive_file_id: driveId })
+    });
+    // stateから除外して再描画
+    state.images = state.images.filter(i => i.driveId !== driveId);
+    selectedImages.delete(driveId);
+    updateSelPanel();
+    renderLibrary();
+    toast('非表示にしました', 'ok');
+  } catch(e) {
+    toast('エラー: ' + e.message, 'err');
+  }
 }
 
 function copyText(text) {
