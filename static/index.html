@@ -250,7 +250,23 @@ textarea.inp { resize: vertical; }
   background: #16161e; border: 1px solid var(--border);
   border-radius: 16px; overflow: hidden;
 }
-.detail-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+.detail-modal .detail-img-wrap {
+  width: 100%; position: relative; cursor: zoom-in;
+}
+.img-fullscreen {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,.95); align-items: center; justify-content: center;
+  padding: 16px;
+}
+.img-fullscreen.show { display: flex; }
+.img-fullscreen img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+.img-fullscreen-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 36px; height: 36px; background: rgba(255,255,255,0.15);
+  border: none; border-radius: 50%; color: #fff; font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.detail-img { width: 100%; display: block; }
 .detail-body { padding: 20px; }
 .detail-sec { margin-bottom: 16px; }
 .detail-sec-title { font-size: 9px; letter-spacing: .15em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
@@ -275,6 +291,12 @@ textarea.inp { resize: vertical; }
 <body>
 
 <div id="toast"></div>
+
+<!-- 画像フルスクリーン -->
+<div class="img-fullscreen" id="img-fullscreen" onclick="closeImgFullscreen()">
+  <button class="img-fullscreen-close" onclick="closeImgFullscreen()">✕</button>
+  <img id="img-fullscreen-img" src="" alt="">
+</div>
 
 <!-- Detail overlay -->
 <div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
@@ -737,7 +759,7 @@ function renderEntries(entries) {
 async function openDetail(id) {
   const res = await fetch('/research/entries/' + id);
   const e   = await res.json();
-  const img   = e.image_url ? '<img class="detail-img" src="' + e.image_url + '" alt="">' : '';
+
   const badge = e.category  ? '<span class="entry-cat" style="margin-bottom:8px;display:inline-block">' + e.category + '</span>' : '';
   const chips = [e.price?'<span class="chip">¥'+e.price+'</span>':'',e.reviews?'<span class="chip">★ 評価 '+e.reviews+'件</span>':''].filter(Boolean).join('');
   const prof  = e.seller_profile ? '<div class="detail-sec"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
@@ -792,6 +814,14 @@ async function deleteEntry(id) {
 }
 
 // ── Helpers ───────────────────────────────────────────────
+function openImgFullscreen(url) {
+  document.getElementById('img-fullscreen-img').src = url;
+  document.getElementById('img-fullscreen').classList.add('show');
+}
+function closeImgFullscreen() {
+  document.getElementById('img-fullscreen').classList.remove('show');
+}
+
 function copyText(text) {
   navigator.clipboard.writeText(text).then(() => toast('📋 コピーしました', 'ok')).catch(() => {
     const el = document.createElement('textarea'); el.value = text;
