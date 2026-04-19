@@ -23,6 +23,7 @@ PABBLY_RESPONSE_URL   = os.environ.get('PABBLY_RESPONSE_URL', '')
 PABBLY_AUTH           = os.environ.get('PABBLY_AUTH', '')
 BASE_URL              = os.environ.get('BASE_URL', '')
 DRIVE_FOLDER_ID       = os.environ.get('DRIVE_FOLDER_ID', '')
+PABBLY_LIST_API_URL   = os.environ.get('PABBLY_LIST_API_URL', '')
 
 
 # ── DB ───────────────────────────────────────────────────────
@@ -75,7 +76,94 @@ def serve_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
 
-# ── /upload: 占いスタジオと完全同一 ──────────────────────────
+
+# ── /drive/list: 占いスタジオと完全同一 ──────────────────────
+@app.route('/drive/list', methods=['POST'])
+def drive_list():
+    data      = request.json or {}
+    folder_id = data.get('folderId', '') or data.get('folder_id', '') or DRIVE_FOLDER_ID
+
+    if not folder_id:
+        return jsonify({'error': 'folderIdが必要です'}), 400
+    if not PABBLY_LIST_API_URL or not PABBLY_AUTH:
+        return jsonify({'error': 'PABBLY_LIST_API_URL が未設定'}), 500
+
+    try:
+        res = requests.post(
+            PABBLY_LIST_API_URL,
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {PABBLY_AUTH}',
+            },
+            json={'parent_id': folder_id},
+            timeout=60,
+        )
+        raw    = res.text
+        parsed = json_lib.loads(raw)
+        result = []
+
+        if isinstance(parsed, dict) and 'data' in parsed:
+            data_val = parsed['data']
+            if isinstance(data_val, dict):
+                if 'raw_data' in data_val:
+                    raw_parsed = json_lib.loads(data_val['raw_data'])
+                    if isinstance(raw_parsed, dict) and 'files' in raw_parsed:
+                        files_val = raw_parsed['files']
+                        result = json_lib.loads(files_val) if isinstance(files_val, str) else files_val
+                    elif isinstance(raw_parsed, list):
+                        result = raw_parsed
+                elif 'files' in data_val:
+                    files_val = data_val['files']
+                    result = json_lib.loads(files_val) if isinstance(files_val, str) else files_val
+            elif isinstance(data_val, list):
+                result = data_val
+        elif isinstance(parsed, dict) and 'files' in parsed:
+            files_val = parsed['files']
+            result = json_lib.loads(files_val) if isinstance(files_val, str) else files_val
+        elif isinstance(parsed, list):
+            result = parsed
+
+        for f in result:
+            fid = f.get('id', '')
+            if fid:
+                f['thumbnailLink'] = f'https://drive.google.com/thumbnail?id={fid}&sz=w400'
+
+        return app.response_class(
+            response=json_lib.dumps(result, ensure_ascii=False),
+            status=200, mimetype='application/json'
+        )
+    except Exception as e:
+        print(f'Drive list error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+# ── /proxy/image: Driveサムネをプロキシ配信 ──────────────────
+@app.route('/proxy/image', methods=['GET'])
+def proxy_image():
+    from flask import Response
+    file_id = request.args.get('id', '')
+    if not file_id: return 'id missing', 400
+    try:
+        thumb_url = f'https://drive.google.com/thumbnail?id={file_id}&sz=w400'
+        r = requests.get(thumb_url, timeout=15, allow_redirects=True,
+            headers={'User-Agent': 'Mozilla/5.0'})
+        if r.status_code == 200 and len(r.content) > 500:
+            ct = r.headers.get('Content-Type', 'image/jpeg').split(';')[0]
+            resp = Response(r.content, status=200, mimetype=ct)
+            resp.headers['Cache-Control'] = 'public, max-age=3600'
+            return resp
+        dl_url = f'https://drive.google.com/uc?export=download&id={file_id}'
+        r2 = requests.get(dl_url, timeout=15, allow_redirects=True,
+            headers={'User-Agent': 'Mozilla/5.0'})
+        ct2 = r2.headers.get('Content-Type', 'image/jpeg').split(';')[0]
+        resp2 = Response(r2.content, status=200, mimetype=ct2)
+        resp2.headers['Cache-Control'] = 'public, max-age=3600'
+        return resp2
+    except Exception as e:
+        return str(e), 500
+
+
+# ── /upload: ファイル → /tmp → Pabbly → Drive URL ───────────
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
