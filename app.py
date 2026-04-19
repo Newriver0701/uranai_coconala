@@ -58,9 +58,15 @@ def init_db():
                 id             SERIAL PRIMARY KEY,
                 drive_file_id  TEXT UNIQUE,
                 cloudinary_url TEXT DEFAULT \'\',
+                hidden         BOOLEAN DEFAULT FALSE,
                 created_at     TIMESTAMP DEFAULT NOW()
             )
         ''')
+        # hiddenカラムがなければ追加
+        try:
+            cur.execute("ALTER TABLE research_library ADD COLUMN IF NOT EXISTS hidden BOOLEAN DEFAULT FALSE")
+        except:
+            pass
         conn.commit()
         cur.close()
         conn.close()
@@ -284,6 +290,42 @@ def library_cloudinary_list():
             (file_ids,))
         rows = cur.fetchall(); cur.close(); conn.close()
         return jsonify({r[0]: r[1] for r in rows if r[1]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+# ── /library/hide: drive_file_idを非表示に ──────────────────
+@app.route('/library/hide', methods=['POST'])
+def library_hide():
+    data          = request.json or {}
+    drive_file_id = data.get('drive_file_id', '')
+    if not drive_file_id:
+        return jsonify({'error': 'drive_file_idが必要'}), 400
+    if not DATABASE_URL:
+        return jsonify({'error': 'DB未設定'}), 500
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute('''INSERT INTO research_library (drive_file_id, hidden)
+            VALUES (%s, TRUE)
+            ON CONFLICT (drive_file_id) DO UPDATE SET hidden = TRUE''',
+            (drive_file_id,))
+        conn.commit(); cur.close(); conn.close()
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ── /library/hidden/list: 非表示IDリスト取得 ─────────────────
+@app.route('/library/hidden/list', methods=['POST'])
+def library_hidden_list():
+    if not DATABASE_URL:
+        return jsonify([])
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute('SELECT drive_file_id FROM research_library WHERE hidden = TRUE')
+        rows = cur.fetchall(); cur.close(); conn.close()
+        return jsonify([r[0] for r in rows])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
