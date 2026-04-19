@@ -765,7 +765,10 @@ async function openDetail(id) {
   const prof  = e.seller_profile ? '<div class="detail-sec"><div class="detail-sec-title">プロフィール</div><div class="detail-text">' + e.seller_profile + '</div></div>' : '';
   const cap   = e.caption ? '<div class="detail-sec"><div class="detail-sec-title">キャプション</div><div class="detail-text">' + e.caption + '</div></div>' : '';
   const notes = e.notes   ? '<div class="detail-sec"><div class="detail-sec-title">メモ・所感</div><div class="detail-text note-text">' + e.notes + '</div></div>' : '';
-  document.getElementById('detail-modal').innerHTML = img +
+    const imgEl = e.image_url
+    ? '<div style="width:100%;cursor:zoom-in;position:relative" onclick="openImgFullscreen(\'' + e.image_url + '\')"><img style="width:100%;display:block" src="' + e.image_url + '" alt=""><div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.55);border-radius:6px;padding:3px 8px;font-size:10px;color:#fff;pointer-events:none">🔍 タップで拡大</div></div>'
+    : '';
+  document.getElementById('detail-modal').innerHTML = imgEl +
     '<div class="detail-body">' + badge +
     '<div style="font-size:17px;font-weight:700;margin-bottom:4px;line-height:1.4;font-family:\'Cormorant Garamond\',serif">' + e.service_title + '</div>' +
     (e.seller_name ? '<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">出品者: ' + e.seller_name + '</div>' : '') +
