@@ -321,10 +321,11 @@ select.inp option{background:var(--bg2)}
 
 <script>
 const CATEGORIES = ['すべて','タロット','占星術','数秘術','手相','霊視','その他'];
-let currentFilter = 'すべて';
-let searchTimer   = null;
-let selectedImages = new Map(); // id -> file obj
-let driveFiles     = [];
+let currentFilter  = 'すべて';
+let searchTimer    = null;
+let selectedImages = new Map(); // driveId -> img obj
+// state.imagesは占いスタジオと同じ構造: {driveId, name, url, thumb, cloudinaryUrl}
+const state = { images: [] };
 
 // ── タブ切替 ───────────────────────────────────────────────
 function switchTab(name) {
@@ -379,7 +380,7 @@ async function handleUpload(input) {
   input.value = '';
 }
 
-// ── Drive一覧 ─────────────────────────────────────────────
+// ── Drive一覧（占いスタジオと同じキャッシュ付き） ─────────────
 async function loadDriveFiles() {
   const btn  = document.getElementById('reloadBtn');
   const load = document.getElementById('driveLoading');
@@ -388,6 +389,7 @@ async function loadDriveFiles() {
   btn.disabled = true;
   load.style.display = 'block';
   fill.style.width = '10%';
+  lbl.textContent = 'Driveから読み込み中...';
 
   let ticker = setInterval(() => {
     const cur = parseFloat(fill.style.width) || 10;
@@ -401,52 +403,108 @@ async function loadDriveFiles() {
     });
     const data = await res.json();
     clearInterval(ticker);
-    fill.style.width = '100%';
     if (data.error) { toast('⚠ ' + data.error, 'err'); return; }
     if (!Array.isArray(data)) { toast('⚠ データ形式エラー', 'err'); return; }
-    driveFiles = data;
+
+    // 占いスタジオと同じstate.images構造に変換
+    state.images = data.map(f => ({
+      driveId:       f.id,
+      name:          (f.name || f.title || f.id).replace(/\.[^.]+$/, ''),
+      url:           'https://drive.google.com/uc?export=view&id=' + f.id,
+      thumb:         '/proxy/image?id=' + f.id,
+      cloudinaryUrl: '',
+    }));
+
+    // DBからCloudinaryキャッシュを取得（占いスタジオと同じ）
+    const driveIds = state.images.map(i => i.driveId).filter(Boolean);
+    if (driveIds.length) {
+      try {
+        const cacheRes  = await fetch('/library/cloudinary/list', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ file_ids: driveIds })
+        });
+        const cacheData = await cacheRes.json();
+        state.images.forEach(img => {
+          if (img.driveId && cacheData[img.driveId]) {
+            img.cloudinaryUrl = cacheData[img.driveId];
+          }
+        });
+      } catch(e) { console.warn('cache load error:', e); }
+    }
+
+    fill.style.width = '100%';
+    lbl.textContent  = '✓ ' + state.images.length + '枚読み込みました';
     renderLibrary();
-    toast('✓ ' + data.length + '枚読み込みました', 'ok');
+    toast('✓ ' + state.images.length + '枚読み込みました', 'ok');
   } catch(e) {
     clearInterval(ticker);
     toast('⚠ ' + e.message, 'err');
   } finally {
     btn.disabled = false;
-    setTimeout(() => { load.style.display='none'; fill.style.width='0%'; }, 1000);
+    setTimeout(() => { load.style.display='none'; fill.style.width='0%'; }, 1500);
   }
 }
 
 function renderLibrary() {
   const grid   = document.getElementById('libGrid');
   const legend = document.getElementById('libLegend');
-  document.getElementById('libCount').textContent = driveFiles.length + '枚';
+  document.getElementById('libCount').textContent = state.images.length + '枚';
 
-  if (!driveFiles.length) {
+  if (!state.images.length) {
     grid.innerHTML = '<div class="lib-empty">ファイルが見つかりませんでした</div>';
     return;
   }
 
-  grid.innerHTML = driveFiles.map(f => {
-    const sel   = selectedImages.has(f.id);
-    const thumb = '/proxy/image?id=' + f.id;
-    const name  = (f.name || f.title || f.id).replace(/\.[^.]+$/, '');
-    return '<div class="lib-item' + (sel?' sel':'') + '" id="li-' + f.id + '" onclick="toggleSel(\'' + f.id + '\')">' +
-      '<img src="' + thumb + '" alt="" loading="lazy" onerror="this.parentNode.style.background=\'#1c1c2e\'">' +
-      '<div class="lib-badge raw" id="lb-' + f.id + '">未変換</div>' +
-      '<div class="lib-lbl">' + name + '</div>' +
-      '</div>';
-  }).join('');
+  // 凡例（占いスタジオと同じ）
+  const converted = state.images.filter(img => img.cloudinaryUrl).length;
+  legend.innerHTML =
+    '<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)">' +
+    '<span style="width:10px;height:10px;border-radius:2px;border:2px solid #444;display:inline-block"></span>未変換 ' + (state.images.length - converted) + '枚</span>' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)">' +
+    '<span style="width:10px;height:10px;border-radius:2px;border:2px solid #7c3aed;background:rgba(124,58,237,0.2);display:inline-block"></span>変換済 ' + converted + '枚</span>';
+
+  grid.innerHTML = '';
+  state.images.forEach(img => {
+    const hasCloud = !!img.cloudinaryUrl;
+    const sel      = selectedImages.has(img.driveId);
+    const div      = document.createElement('div');
+    div.className  = 'lib-item' + (sel ? ' sel' : '');
+    div.id         = 'li-' + img.driveId;
+    div.style.border = '2px solid ' + (hasCloud ? '#7c3aed' : '#333');
+    div.style.background = hasCloud ? 'rgba(124,58,237,0.05)' : '';
+
+    const badge = hasCloud
+      ? '<div style="position:absolute;top:4px;left:4px;background:#7c3aed;color:#fff;font-size:8px;padding:2px 6px;border-radius:8px;font-weight:bold">☁ 変換済</div>'
+      : '<div style="position:absolute;top:4px;left:4px;background:#555;color:#ccc;font-size:8px;padding:2px 6px;border-radius:8px">未変換</div>';
+
+    const urlRow = hasCloud
+      ? '<div style="padding:3px 6px 5px;display:flex;align-items:center;gap:4px">' +
+        '<div style="font-size:8px;color:#a78bfa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + img.cloudinaryUrl + '</div>' +
+        '<button onclick="event.stopPropagation();copyText(\'' + img.cloudinaryUrl.replace(/'/g, "\\'") + '\')" style="background:rgba(124,58,237,0.2);border:none;color:#a78bfa;font-size:9px;padding:2px 5px;border-radius:4px;cursor:pointer;flex-shrink:0">📋</button>' +
+        '</div>'
+      : '';
+
+    div.innerHTML =
+      '<div style="position:relative">' +
+      '<img src="' + img.thumb + '" onerror="this.src=\'' + img.url + '\';this.onerror=null" loading="lazy">' +
+      badge + '</div>' +
+      '<div class="lib-lbl" style="font-size:9px;padding:4px 6px">' + img.name + '</div>' +
+      urlRow;
+
+    div.onclick = () => toggleSel(img.driveId);
+    grid.appendChild(div);
+  });
 }
 
 function toggleSel(id) {
-  const f = driveFiles.find(f => f.id === id);
-  if (!f) return;
+  const img = state.images.find(i => i.driveId === id);
+  if (!img) return;
   const el = document.getElementById('li-' + id);
   if (selectedImages.has(id)) {
     selectedImages.delete(id);
     el.classList.remove('sel');
   } else {
-    selectedImages.set(id, f);
+    selectedImages.set(id, img);
     el.classList.add('sel');
   }
   updateSelPanel();
@@ -472,7 +530,7 @@ function updateSelPanel() {
 async function startConvert() {
   if (!selectedImages.size) return;
   const f        = [...selectedImages.values()][0];
-  const driveUrl = 'https://drive.google.com/uc?export=view&id=' + f.id;
+  const driveUrl = f.url || ('https://drive.google.com/uc?export=view&id=' + f.driveId);
 
   // 確認タブへ
   switchTab('confirm');
@@ -493,9 +551,14 @@ async function startConvert() {
       return;
     }
     cloudinaryUrl = data.url;
-    // バッジ更新
-    const badge = document.getElementById('lb-' + f.id);
-    if (badge) { badge.textContent = '☁ 変換済'; badge.className = 'lib-badge converted'; }
+    // DBにキャッシュ保存（占いスタジオと同じ）
+    fetch('/library/cloudinary/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ drive_file_id: f.driveId, cloudinary_url: cloudinaryUrl })
+    }).catch(() => {});
+    // state.images更新してバッジ再描画
+    const stateImg = state.images.find(i => i.driveId === f.driveId);
+    if (stateImg) { stateImg.cloudinaryUrl = cloudinaryUrl; renderLibrary(); }
   } catch(e) {
     document.getElementById('confirm-loading').textContent = '⚠ エラー: ' + e.message;
     return;
@@ -697,6 +760,15 @@ function toast(msg, type) {
   el.className = 'show ' + (type || '');
   clearTimeout(el._t);
   el._t = setTimeout(() => el.className = '', 2800);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('📋 コピーしました', 'ok')).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = text; document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    toast('📋 コピーしました', 'ok');
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────
