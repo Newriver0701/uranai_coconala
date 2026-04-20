@@ -22,7 +22,7 @@ PABBLY_VISION_URL     = os.environ.get('PABBLY_VISION_URL', '')
 PABBLY_RESPONSE_URL   = os.environ.get('PABBLY_RESPONSE_URL', '')
 PABBLY_AUTH           = os.environ.get('PABBLY_AUTH', '')
 BASE_URL              = os.environ.get('BASE_URL', '')
-DRIVE_FOLDER_ID       = os.environ.get('DRIVE_FOLDER_ID', '')
+RESEARCH_DRIVE_FOLDER_ID = os.environ.get('RESEARCH_DRIVE_FOLDER_ID', '')
 PABBLY_LIST_API_URL   = os.environ.get('PABBLY_LIST_API_URL', '')
 
 
@@ -95,7 +95,7 @@ def serve_file(filename):
 @app.route('/drive/list', methods=['POST'])
 def drive_list():
     data      = request.json or {}
-    folder_id = data.get('folderId', '') or data.get('folder_id', '') or DRIVE_FOLDER_ID
+    folder_id = data.get('folderId', '') or data.get('folder_id', '') or RESEARCH_DRIVE_FOLDER_ID
 
     if not folder_id:
         return jsonify({'error': 'folderIdが必要です'}), 400
@@ -184,7 +184,7 @@ def upload():
         return jsonify({'error': 'ファイルがありません'}), 400
 
     file       = request.files['file']
-    folder_id  = request.form.get('folderId', DRIVE_FOLDER_ID)
+    folder_id  = request.form.get('folderId', RESEARCH_DRIVE_FOLDER_ID)
     file_label = request.form.get('file_name', '')
 
     ext = os.path.splitext(file.filename)[1].lower()
